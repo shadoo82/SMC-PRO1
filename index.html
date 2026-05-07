@@ -1894,88 +1894,134 @@ document.addEventListener('DOMContentLoaded',function(){const largeInput=documen
     // — Tab Zonas Activas —
     function renderActiveZonesTab(zones) {
         if (!zones || zones.length === 0) {
-            return `<div style="text-align:center; padding:40px; color:#555;">
-                <div style="font-size:36px; margin-bottom:10px;">🔍</div>
+            return `<div style="text-align:center;padding:40px;color:#555;">
+                <div style="font-size:36px;margin-bottom:10px;">🔍</div>
                 No hay zonas activas<br>
                 <small style="color:#444;">Presiona ↺ para buscar</small>
             </div>`;
         }
 
+        // Zonas guardadas hoy desde localStorage
+        const savedToday = loadTodayZones();
+        const savedMap   = new Map();
+        savedToday.forEach(s => {
+            const k = Math.round(s.price * 100);
+            if (!savedMap.has(k)) {
+                savedMap.set(k, {
+                    time:      new Date(s.savedAt).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),
+                    mitigated: s.mitigated || s.status === 'mitigated',
+                });
+            }
+        });
+
         return zones.map((z, i) => {
             const isBid       = z.side === 'bid';
             const color       = isBid ? '#00ff88' : '#ff5555';
-            const icon        = z.tier === 'WHALE' ? '🐋' : z.tier === 'INST' ? '🏛️' : '📌';
-            const dist        = markPriceFutures ? ((z.price - markPriceFutures) / markPriceFutures * 100).toFixed(2) : '0.00';
+            const icon        = z.tier==='WHALE' ? '🐋' : z.tier==='INST' ? '🏛️' : '📌';
+            const dist        = markPriceFutures
+                ? ((z.price - markPriceFutures) / markPriceFutures * 100).toFixed(2) : '0.00';
             const dSign       = parseFloat(dist) >= 0 ? '+' : '';
             const barW        = Math.min(100, z.score);
-            // Pre-calcular todo ANTES del template literal (evita errores de sintaxis)
-            const priceKey     = Math.round(z.price * 100);
-            const alreadySaved = savedZonePrices.has(priceKey);
+            const priceKey    = Math.round(z.price * 100);
+            const savedInfo   = savedMap.get(priceKey);
+            const isSaved     = !!savedInfo;
+            const isMitigated = savedInfo && savedInfo.mitigated;
             const alreadyDrawn = drawnZonePrices.has(priceKey);
-            const drawBgColor  = isBid ? 'rgba(0,255,136,0.15)' : 'rgba(255,85,85,0.15)';
+
+            const borderColor = isMitigated ? '#555' : isSaved ? '#ffaa00' : color;
+            const bgColor     = isMitigated ? 'rgba(80,80,80,0.06)'
+                              : isSaved     ? 'rgba(255,170,0,0.05)'
+                              : 'rgba(255,255,255,0.03)';
+
+            // Badge de estado (Nueva / Guardada HH:MM / Mitigada)
+            const stateBadge = isMitigated
+                ? `<span style="background:rgba(80,80,80,0.3);color:#777;border:1px solid #555;
+                               padding:2px 7px;border-radius:3px;font-size:9px;">💥 Mitigada</span>`
+                : isSaved
+                ? `<span style="background:rgba(255,170,0,0.2);color:#ffaa00;border:1px solid rgba(255,170,0,0.4);
+                               padding:2px 7px;border-radius:3px;font-size:9px;">✅ ${savedInfo.time}</span>`
+                : `<span style="background:rgba(0,150,255,0.15);color:#64b5f6;border:1px solid rgba(0,150,255,0.3);
+                               padding:2px 7px;border-radius:3px;font-size:9px;">🆕 Nueva</span>`;
+
+            // Badge de tier
+            const tierBg    = z.tier==='WHALE'?'rgba(0,200,255,0.15)':z.tier==='INST'?'rgba(156,39,176,0.2)':'rgba(255,255,255,0.07)';
+            const tierColor = z.tier==='WHALE'?'#4dd0e1':z.tier==='INST'?'#ce93d8':'#888';
+            const tierBadge = `<span style="background:${tierBg};color:${tierColor};border:1px solid currentColor;
+                                           padding:2px 6px;border-radius:3px;font-size:9px;">${icon} ${z.tier}</span>`;
+
+            const drawBg = isBid ? 'rgba(0,255,136,0.15)' : 'rgba(255,85,85,0.15)';
 
             return `
-            <div style="margin-bottom:10px; padding:11px; background:rgba(255,255,255,0.03); 
-                        border-radius:7px; border-left:3px solid ${color}; position:relative;">
-                <!-- Tier badge -->
-                <span style="position:absolute; top:7px; right:8px; font-size:9px; padding:2px 6px; border-radius:3px;
-                             background:${z.tier==='WHALE'?'rgba(0,200,255,0.15)':z.tier==='INST'?'rgba(156,39,176,0.2)':'rgba(255,255,255,0.08)'};
-                             color:${z.tier==='WHALE'?'#4dd0e1':z.tier==='INST'?'#ce93d8':'#888'}; border:1px solid currentColor;">
-                    ${icon} ${z.tier}
-                </span>
+            <div style="margin-bottom:10px;padding:10px;background:${bgColor};
+                        border-radius:7px;border-left:3px solid ${borderColor};">
 
-                <!-- Price + side -->
-                <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:6px;">
-                    <span style="font-size:15px; font-weight:700; color:#fff;">${formatPrice(z.price)}</span>
-                    <span style="font-size:11px; color:${color}; font-weight:600;">${isBid?'BID (Soporte)':'ASK (Resistencia)'}</span>
+                <!-- FILA 1: precio + badges estado y tier -->
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <span style="font-size:15px;font-weight:700;color:${isMitigated?'#777':'#fff'};">
+                        ${formatPrice(z.price)}
+                    </span>
+                    <div style="display:flex;gap:5px;align-items:center;">
+                        ${stateBadge}
+                        ${tierBadge}
+                    </div>
                 </div>
 
-                <!-- USDT + distancia -->
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:11px;">
-                    <span style="color:#ffaa00; font-weight:700; font-size:13px;">💵 ${formatUsdt(z.totalUsdt)}</span>
-                    <span style="color:${parseFloat(dist)>=0?'#4eff78':'#ff5555'}; font-weight:600;">
+                <!-- FILA 2: tipo (BID/ASK) + distancia % -->
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <span style="font-size:11px;color:${color};font-weight:600;">
+                        ${isBid?'BID (Soporte)':'ASK (Resistencia)'}
+                    </span>
+                    <span style="font-size:11px;font-weight:600;
+                                 color:${parseFloat(dist)>=0?'#4eff78':'#ff5555'};">
                         ${dSign}${dist}%
                     </span>
                 </div>
 
-                <!-- Desglose bid/ask -->
-                <div style="display:flex; gap:12px; font-size:10px; color:#777; margin-bottom:8px;">
-                    <span>🟢 Bids: <strong style="color:#00cc70">${formatUsdt(z.bidUsdt)}</strong></span>
-                    <span>🔴 Asks: <strong style="color:#cc3344">${formatUsdt(z.askUsdt)}</strong></span>
-                    <span>📦 ${z.orderCount} órdenes</span>
+                <!-- FILA 3: volumen USDT -->
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:11px;">
+                    <span style="color:#ffaa00;font-weight:700;">💵 ${formatUsdt(z.totalUsdt)}</span>
+                    <span style="color:#777;font-size:10px;">
+                        🟢 ${formatUsdt(z.bidUsdt)} &nbsp; 🔴 ${formatUsdt(z.askUsdt)}
+                    </span>
                 </div>
 
-                <!-- Score bar -->
+                <!-- FILA 4: score bar -->
                 <div style="margin-bottom:8px;">
-                    <div style="display:flex; justify-content:space-between; font-size:9px; color:#555; margin-bottom:3px;">
-                        <span>Importancia</span><span>${z.score}/100</span>
+                    <div style="display:flex;justify-content:space-between;font-size:9px;color:#555;margin-bottom:2px;">
+                        <span>Importancia · ${z.orderCount} órdenes</span>
+                        <span>${z.score}/100</span>
                     </div>
-                    <div style="height:4px; background:#1a1a2e; border-radius:2px;">
-                        <div style="width:${barW}%; height:100%; background:linear-gradient(90deg,${color},${color}88); border-radius:2px;"></div>
+                    <div style="height:3px;background:#1a1a2e;border-radius:2px;">
+                        <div style="width:${barW}%;height:100%;
+                                    background:${isSaved?'#ffaa00':color};
+                                    border-radius:2px;opacity:0.8;"></div>
                     </div>
                 </div>
 
-                                <!-- Botones con indicador guardado/dibujado -->
-                <div style="display:flex; gap:6px;">
+                <!-- FILA 5: botones -->
+                <div style="display:flex;gap:6px;">
                     <button onclick="window.saveInstZone(${i})"
-                            style="flex:1; padding:5px; border-radius:4px; font-size:10px; cursor:pointer; transition:all 0.2s;
-                                   background:${alreadySaved ? 'rgba(0,200,100,0.35)' : 'rgba(33,150,243,0.2)'};
-                                   border:1px solid ${alreadySaved ? '#00cc66' : '#2196f3'};
-                                   color:${alreadySaved ? '#00ff88' : '#90caf9'};">
-                        ${alreadySaved ? '✅ Guardada' : '💾 Guardar'}
+                            ${isMitigated?'disabled':''}
+                            style="flex:1;padding:5px 0;border-radius:4px;font-size:10px;
+                                   cursor:${isMitigated?'default':'pointer'};transition:all 0.2s;
+                                   background:${isMitigated?'rgba(80,80,80,0.15)':isSaved?'rgba(255,170,0,0.2)':'rgba(33,150,243,0.2)'};
+                                   border:1px solid ${isMitigated?'#444':isSaved?'#ffaa00':'#2196f3'};
+                                   color:${isMitigated?'#555':isSaved?'#ffaa00':'#90caf9'};
+                                   opacity:${isMitigated?'0.4':'1'};">
+                        ${isMitigated?'💥 Mitigada':isSaved?'✅ '+savedInfo.time:'💾 Guardar'}
                     </button>
                     <button onclick="window.drawSingleInstZone(${i})"
-                            style="flex:1; padding:5px; border-radius:4px; font-size:10px; cursor:pointer; transition:all 0.2s;
-                                   background:${alreadyDrawn ? 'rgba(200,120,0,0.35)' : drawBgColor};
-                                   border:1px solid ${alreadyDrawn ? '#cc8800' : color};
-                                   color:${alreadyDrawn ? '#ffaa00' : color};">
-                        ${alreadyDrawn ? '📈 Dibujada' : '📈 Dibujar'}
+                            style="flex:1;padding:5px 0;border-radius:4px;font-size:10px;
+                                   cursor:pointer;transition:all 0.2s;
+                                   background:${alreadyDrawn?'rgba(200,120,0,0.25)':drawBg};
+                                   border:1px solid ${alreadyDrawn?'#cc8800':color};
+                                   color:${alreadyDrawn?'#ffaa00':color};">
+                        ${alreadyDrawn?'📈 Dibujada':'📈 Dibujar'}
                     </button>
                 </div>
             </div>`;
         }).join('');
     }
-
     // — Tab Zonas Guardadas Hoy —
     function renderSavedZonesTab(saved) {
         if (!saved || saved.length === 0) {
@@ -2126,6 +2172,313 @@ document.addEventListener('DOMContentLoaded',function(){const largeInput=documen
     // ============================================================
     // 🌐 EXPOSICIÓN GLOBAL
     // ============================================================
+// ════════════════════════════════════════════════════════════════
+//  🎯 SISTEMA DE ALERTAS DE PRECISIÓN — Multi-símbolo en tiempo real
+//  Objetivos:
+//   1. WebSocket real-time para CADA par guardado (no polling REST)
+//   2. Alertas PREVIAS por proximidad: 2% → 1% → 0.3%
+//   3. Detección institucional mejorada con persistencia + rebotes
+//   4. Evitar spam: cada alerta de proximidad solo 1 vez por vela
+// ════════════════════════════════════════════════════════════════
+
+    // ── Pool de WebSockets por símbolo ──
+    const _symWS    = new Map();   // sym → WebSocket
+    const _symPrice = new Map();   // sym → { price, low, high, ts }
+
+    // ── Control anti-spam ──
+    // Guardamos { zoneId_level: timestamp } para no repetir alertas
+    const _alertSent = new Map();
+    const ALERT_COOLDOWN_MS = 60 * 60 * 1000;  // 1 hora entre alertas del mismo nivel
+
+    // Niveles de proximidad (% antes de tocar la zona)
+    const PROXIMITY_LEVELS = [
+        { key: 'warn2',   pct: 0.020, label: '⚠️ Aproximándose 2%',  emoji: '🟡' },
+        { key: 'warn1',   pct: 0.010, label: '🔔 Zona cercana 1%',   emoji: '🟠' },
+        { key: 'imminent',pct: 0.003, label: '🚨 INMINENTE 0.3%',    emoji: '🔴' },
+    ];
+
+    // ── Conectar WebSocket de ticker para un símbolo ──
+    function connectSymbolTicker(sym) {
+        if (_symWS.has(sym)) return;   // ya conectado
+
+        const ws = new WebSocket(
+            `wss://stream.binancefuture.com/ws/${sym.toLowerCase()}@ticker`
+        );
+
+        ws.onopen = () => {
+            console.log(`🔌 Ticker conectado: ${sym}`);
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.c) {
+                    const price = parseFloat(data.c);
+                    const prev  = _symPrice.get(sym);
+                    _symPrice.set(sym, {
+                        price,
+                        low:  prev ? Math.min(prev.low  || price, price) : price,
+                        high: prev ? Math.max(prev.high || price, price) : price,
+                        ts:   Date.now(),
+                    });
+                    // Verificar zonas de este símbolo en tiempo real
+                    checkZonesForSymbol(sym, price);
+                }
+            } catch(e) {}
+        };
+
+        ws.onerror = () => {
+            _symWS.delete(sym);
+            // Reconectar en 10s
+            setTimeout(() => connectSymbolTicker(sym), 10000);
+        };
+
+        ws.onclose = (e) => {
+            _symWS.delete(sym);
+            if (e.code !== 1000) {
+                setTimeout(() => connectSymbolTicker(sym), 5000);
+            }
+        };
+
+        _symWS.set(sym, ws);
+    }
+
+    // ── Desconectar símbolo cuando ya no tenga zonas pendientes ──
+    function disconnectSymbolTicker(sym) {
+        const ws = _symWS.get(sym);
+        if (ws) {
+            ws.close(1000, 'No more zones');
+            _symWS.delete(sym);
+            _symPrice.delete(sym);
+        }
+    }
+
+    // ── Iniciar/actualizar el pool de WS según zonas guardadas ──
+    function syncSymbolWatchlist() {
+        const activeSyms = new Set();
+
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (!k || !k.startsWith('inst_zones_history_')) continue;
+            const sym = k.replace('inst_zones_history_', '');
+            try {
+                const history = JSON.parse(localStorage.getItem(k) || '{}');
+                // ¿Tiene zonas pendientes en últimos 3 días?
+                const hasPending = Object.values(history).flat()
+                    .some(z => !z.mitigated && z.status !== 'mitigated');
+                if (hasPending) {
+                    activeSyms.add(sym);
+                    if (!_symWS.has(sym)) connectSymbolTicker(sym);
+                }
+            } catch(e) {}
+        }
+
+        // Desconectar los que ya no tienen zonas pendientes
+        for (const sym of _symWS.keys()) {
+            if (!activeSyms.has(sym)) disconnectSymbolTicker(sym);
+        }
+
+        console.log(`📡 Watchlist activo: ${[...activeSyms].join(', ')} (${activeSyms.size} pares)`);
+        return activeSyms;
+    }
+
+    // ── Verificar zonas para un símbolo (llamado por el WS en tiempo real) ──
+    function checkZonesForSymbol(sym, currentPrice) {
+        const histKey = `inst_zones_history_${sym}`;
+        let raw;
+        try { raw = localStorage.getItem(histKey); }
+        catch(e) { return; }
+        if (!raw) return;
+
+        let history;
+        try { history = JSON.parse(raw); }
+        catch(e) { return; }
+
+        // Días a revisar (hoy + ayer + anteayer)
+        const daysToCheck = [];
+        for (let d = 0; d <= 2; d++) {
+            const dt = new Date();
+            dt.setDate(dt.getDate() - d);
+            daysToCheck.push(
+                dt.getFullYear() + '-' +
+                String(dt.getMonth()+1).padStart(2,'0') + '-' +
+                String(dt.getDate()).padStart(2,'0')
+            );
+        }
+
+        let anyChange = false;
+
+        daysToCheck.forEach(day => {
+            (history[day] || []).forEach(zone => {
+                if (zone.mitigated || zone.status === 'mitigated') return;
+
+                const isAsk = zone.side === 'ask';
+                const buffer = INST_CONFIG.mitigationPct;
+
+                // ── 1. MITIGACIÓN EXACTA ──
+                const mitigated = isAsk
+                    ? currentPrice >= zone.price * (1 - buffer)
+                    : currentPrice <= zone.price * (1 + buffer);
+
+                if (mitigated) {
+                    zone.mitigated  = true;
+                    zone.status     = 'mitigated';
+                    zone.touchPrice = currentPrice;
+                    zone.touchTime  = new Date().toISOString();
+                    anyChange = true;
+
+                    console.log(`💥 [${sym}] ${zone.side.toUpperCase()} @ ${formatPrice(zone.price)} MITIGADA`);
+
+                    // Alerta visual
+                    showMitigationAlert({ ...zone }, currentPrice);
+                    if (sym !== symbol) _showCrossSymbolBanner(sym, zone, currentPrice, '💥 ZONA MITIGADA');
+
+                    // Telegram
+                    _sendMitigationTelegram(sym, zone, currentPrice);
+
+                    return;
+                }
+
+                // ── 2. ALERTAS DE PROXIMIDAD (preventivas) ──
+                const distPct = Math.abs(currentPrice - zone.price) / zone.price;
+
+                // Solo alertar si el precio se ACERCA (dirección correcta)
+                const approaching = isAsk
+                    ? currentPrice < zone.price   // precio subiendo hacia ASK
+                    : currentPrice > zone.price;  // precio bajando hacia BID
+
+                if (!approaching) return;
+
+                for (const level of PROXIMITY_LEVELS) {
+                    if (distPct <= level.pct) {
+                        const alertKey = `${sym}_${Math.round(zone.price)}_${level.key}`;
+                        const lastSent = _alertSent.get(alertKey) || 0;
+
+                        if (Date.now() - lastSent > ALERT_COOLDOWN_MS) {
+                            _alertSent.set(alertKey, Date.now());
+
+                            console.log(`${level.emoji} [${sym}] Zona ${zone.side} @ ${formatPrice(zone.price)} — ${level.label}`);
+
+                            // Alerta visual en pantalla
+                            _showProximityAlert(sym, zone, currentPrice, level);
+
+                            // Telegram de proximidad
+                            _sendProximityTelegram(sym, zone, currentPrice, level);
+                        }
+                        break;  // solo el nivel más cercano
+                    }
+                }
+            });
+        });
+
+        if (anyChange) {
+            try { localStorage.setItem(histKey, JSON.stringify(history)); } catch(e) {}
+            // Refrescar UI
+            if (sym === symbol) renderZonesPanel();
+            const btOverlay = document.getElementById('bt-overlay');
+            if (btOverlay && btOverlay.style.display !== 'none' && typeof BT !== 'undefined') {
+                BT.allHistory = BT.getAllSymbolsHistory();
+                if (typeof renderBtSidebarContent === 'function') renderBtSidebarContent();
+                if (typeof updateBtStatsBar === 'function') updateBtStatsBar();
+            }
+        }
+    }
+
+    // ── Banner para pares no activos ──
+    function _showCrossSymbolBanner(sym, zone, price, title) {
+        const isBid = zone.side === 'bid';
+        const n = document.createElement('div');
+        n.style.cssText = `
+            position:fixed;top:70px;left:50%;transform:translateX(-50%);
+            background:${isBid?'rgba(0,100,50,0.95)':'rgba(180,20,20,0.95)'};
+            color:#fff;padding:10px 20px;border-radius:8px;font-size:12px;
+            z-index:10010;font-family:'Consolas',monospace;
+            box-shadow:0 4px 20px rgba(0,0,0,0.6);
+            animation:slideInDown 0.3s ease;border:1px solid ${isBid?'#00ff88':'#ff5555'};`;
+        n.innerHTML = `${title} — <strong>${sym}</strong> &nbsp;
+            ${isBid?'BID':'ASK'} <strong>${formatPrice(zone.price)}</strong> &nbsp;
+            → toque: <strong>${formatPrice(price)}</strong>`;
+        document.body.appendChild(n);
+        setTimeout(() => { n.style.opacity='0'; setTimeout(()=>n.remove(),400); }, 8000);
+    }
+
+    // ── Banner de proximidad ──
+    function _showProximityAlert(sym, zone, price, level) {
+        const isBid = zone.side === 'bid';
+        const dist  = Math.abs(price - zone.price);
+        const pct   = (dist / zone.price * 100).toFixed(2);
+
+        const n = document.createElement('div');
+        n.style.cssText = `
+            position:fixed;bottom:80px;left:20px;
+            background:rgba(20,20,30,0.96);
+            border:1px solid ${isBid?'#00ff88':'#ff5555'};
+            border-left:4px solid ${level.key==='imminent'?'#ff0000':level.key==='warn1'?'#ff8800':'#ffcc00'};
+            color:#fff;padding:10px 15px;border-radius:6px;font-size:11px;
+            z-index:10010;font-family:'Consolas',monospace;
+            box-shadow:0 4px 15px rgba(0,0,0,0.5);
+            animation:fadeIn 0.3s ease;min-width:220px;`;
+        n.innerHTML = `${level.emoji} <strong>${level.label}</strong><br>
+            <strong>${sym}</strong> &nbsp; ${isBid?'BID':'ASK'} <strong>${formatPrice(zone.price)}</strong><br>
+            Precio actual: ${formatPrice(price)} &nbsp;
+            <span style="color:${isBid?'#ff5555':'#4eff78'}">
+                ${isBid?'▼':'▲'} ${pct}% restante
+            </span>`;
+        document.body.appendChild(n);
+        setTimeout(() => { n.style.opacity='0'; setTimeout(()=>n.remove(),400); }, 12000);
+    }
+
+    // ── Telegram mitigación ──
+    function _sendMitigationTelegram(sym, zone, touchPrice) {
+        if (!window.TG?.cfg?.enabled) return;
+        const isBid   = zone.side === 'bid';
+        const diffPct = (((touchPrice - zone.price)/zone.price)*100).toFixed(3);
+        const msg = [
+            `💥 ZONA MITIGADA`,
+            ``,
+            `Par: ${sym}`,
+            `${isBid ? 'SOPORTE BID TOCADO' : 'RESISTENCIA ASK TOCADA'}`,
+            ``,
+            `Zona guardada: ${formatPrice(zone.price)}`,
+            `Precio de toque: ${formatPrice(touchPrice)}`,
+            `Diferencia: ${diffPct}%`,
+            `Volumen zona: ${formatUsdt(zone.totalUsdt || 0)} USDT`,
+            `Tier: ${zone.tier || 'N/A'}`,
+            ``,
+            `Hora: ${new Date().toLocaleTimeString('es-ES')}`,
+            `Dia: ${zone.date || '—'}`,
+        ].join('\n');
+        window.TG.send(msg).catch(()=>{});
+    }
+
+    // ── Telegram proximidad ──
+    function _sendProximityTelegram(sym, zone, currentPrice, level) {
+        if (!window.TG?.cfg?.enabled) return;
+        const isBid   = zone.side === 'bid';
+        const distPct = (Math.abs(currentPrice - zone.price)/zone.price*100).toFixed(2);
+        const msg = [
+            `${level.emoji} ${level.label}`,
+            ``,
+            `Par: ${sym}`,
+            `${isBid ? 'BID (Soporte)' : 'ASK (Resistencia)'}`,
+            ``,
+            `Zona: ${formatPrice(zone.price)}`,
+            `Precio actual: ${formatPrice(currentPrice)}`,
+            `Distancia restante: ${distPct}%`,
+            `Volumen zona: ${formatUsdt(zone.totalUsdt || 0)} USDT`,
+            `Tier: ${zone.tier || 'N/A'}`,
+            ``,
+            `Hora: ${new Date().toLocaleTimeString('es-ES')}`,
+        ].join('\n');
+        window.TG.send(msg).catch(()=>{});
+    }
+
+    // ── Exponer globalmente ──
+    window.syncSymbolWatchlist = syncSymbolWatchlist;
+    window._symWS              = _symWS;
+    window._symPrice           = _symPrice;
+
+
     window.refreshInstZones = function() {
         if (!markPriceFutures || !chart) {
             setTimeout(window.refreshInstZones, 1500);
@@ -2145,6 +2498,8 @@ document.addEventListener('DOMContentLoaded',function(){const largeInput=documen
         const result = saveZoneToDaily(zone);
         if (result !== false) {
             savedZonePrices.add(Math.round(zone.price * 100));
+            // Actualizar watchlist para empezar a monitorear este símbolo
+            setTimeout(() => syncSymbolWatchlist(), 500);
         }
         renderZonesPanel();
     };
@@ -2183,89 +2538,210 @@ document.addEventListener('DOMContentLoaded',function(){const largeInput=documen
     // Esta función es la que REALMENTE detecta cuándo el precio toca
     // una zona que el usuario guardó con 💾
     // ─────────────────────────────────────────────────────────────
-    function checkSavedZonesMitigation() {
-        if (!markPriceFutures) return;
+    // ─────────────────────────────────────────────────────────────
+    // 💥 MITIGACIÓN PARA TODOS LOS PARES GUARDADOS
+    // Obtiene el precio actual de cada símbolo via REST si no es el activo
+    // ─────────────────────────────────────────────────────────────
 
-        const currentPrice = markPriceFutures;
-        const histKey      = ZONES_HISTORY_KEY();
+    // Caché de precios: { ETHUSDT: { price, ts }, SOLUSDT: { price, ts }, ... }
+    const _priceCache = {};
 
-        // Solo revisar zonas de los últimos 3 días (no todo el historial)
-        const today    = getLocalDate();
-        const d1 = new Date(); d1.setDate(d1.getDate()-1);
-        const d2 = new Date(); d2.setDate(d2.getDate()-2);
-        const yesterday   = d1.getFullYear()+'-'+String(d1.getMonth()+1).padStart(2,'0')+'-'+String(d1.getDate()).padStart(2,'0');
-        const dayBefore   = d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');
-        const daysToCheck = [today, yesterday, dayBefore];
+    // Caché de rango de precios: { sym: { price, low, high, ts } }
+    async function fetchPriceRangeForSymbol(sym) {
+        const now = Date.now();
+        // Caché de 3 segundos
+        if (_priceCache[sym] && (now - _priceCache[sym].ts) < 3000) {
+            return _priceCache[sym];
+        }
 
+        // Símbolo activo: usar datos locales de velas
+        if (sym === symbol && markPriceFutures > 0) {
+            // Tomar el low y high de las últimas 2 velas para no perder toques rápidos
+            let low  = markPriceFutures;
+            let high = markPriceFutures;
+            if (candlesData && candlesData.length >= 2) {
+                const last1 = candlesData[candlesData.length - 1];
+                const last2 = candlesData[candlesData.length - 2];
+                low  = Math.min(last1.low,  last2.low,  markPriceFutures);
+                high = Math.max(last1.high, last2.high, markPriceFutures);
+            }
+            const range = { price: markPriceFutures, low, high, ts: now };
+            _priceCache[sym] = range;
+            return range;
+        }
+
+        // Otros símbolos: REST — última vela de 1 minuto (tiene el low/high exacto)
         try {
-            const raw = localStorage.getItem(histKey);
-            if (!raw) return;
-
-            const history    = JSON.parse(raw);
-            let anyMitigated = false;
-
-            daysToCheck.forEach(day => {
-                (history[day] || []).forEach(zone => {
-                    if (zone.mitigated || zone.status === 'mitigated') return;
-
-                    const isAsk = zone.side === 'ask';
-                    const isBid = zone.side === 'bid';
-
-                    // ─────────────────────────────────────────────────────────
-                    // VERIFICACIÓN DIRECCIONAL — el precio debe CRUZAR la zona
-                    //
-                    //  ASK (resistencia): el precio sube hasta o por encima
-                    //      → currentPrice >= zone.price * (1 - buffer)
-                    //      → la zona está en o debajo del precio actual
-                    //
-                    //  BID (soporte):     el precio baja hasta o por debajo
-                    //      → currentPrice <= zone.price * (1 + buffer)
-                    //      → la zona está en o encima del precio actual
-                    // ─────────────────────────────────────────────────────────
-                    const buffer = INST_CONFIG.mitigationPct;   // 0.15%
-                    let touched  = false;
-
-                    if (isAsk) {
-                        // Precio alcanzó o superó la resistencia
-                        touched = currentPrice >= zone.price * (1 - buffer);
-                    } else if (isBid) {
-                        // Precio bajó hasta o bajo el soporte
-                        touched = currentPrice <= zone.price * (1 + buffer);
-                    }
-
-                    if (!touched) return;
-
-                    // ✅ ZONA ALCANZADA
-                    zone.mitigated   = true;
-                    zone.status      = 'mitigated';
-                    zone.touchPrice  = currentPrice;
-                    zone.touchTime   = new Date().toISOString();
-                    anyMitigated     = true;
-
-                    console.log(`💥 ZONA MITIGADA [${zone.side.toUpperCase()}] @ ${formatPrice(zone.price)} | precio: ${formatPrice(currentPrice)} | día: ${day}`);
-
-                    showMitigationAlert(zone, currentPrice);
-
-                    if (typeof window.TG !== 'undefined' && window.TG.cfg && window.TG.cfg.enabled) {
-                        window.TG.notifyZoneMitigated(zone, currentPrice);
-                    }
-                });
-            });
-
-            if (anyMitigated) {
-                localStorage.setItem(histKey, JSON.stringify(history));
-                renderZonesPanel();
-                const btOverlay = document.getElementById('bt-overlay');
-                if (btOverlay && btOverlay.style.display !== 'none') {
-                    if (typeof BT !== 'undefined') {
-                        BT.allHistory = BT.getAllSymbolsHistory();
-                        if (typeof renderBtSidebarContent === 'function') renderBtSidebarContent();
-                        if (typeof updateBtStatsBar === 'function') updateBtStatsBar();
-                    }
-                }
+            const res  = await fetch(
+                `https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=1m&limit=2`
+            );
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+                // Combinar last 2 velas para capturar toques recientes
+                const prices = data.map(k => ({
+                    close: parseFloat(k[4]),
+                    low:   parseFloat(k[3]),
+                    high:  parseFloat(k[2]),
+                }));
+                const price = prices[prices.length - 1].close;
+                const low   = Math.min(...prices.map(p => p.low));
+                const high  = Math.max(...prices.map(p => p.high));
+                const range = { price, low, high, ts: now };
+                _priceCache[sym] = range;
+                return range;
             }
         } catch(e) {
-            console.warn('checkSavedZonesMitigation error:', e);
+            console.warn(`No se pudo obtener rango de ${sym}:`, e.message);
+        }
+        return null;
+    }
+
+    async function checkSavedZonesMitigation() {
+        if (!markPriceFutures) return;
+
+        // Obtener todos los símbolos que tienen zonas guardadas
+        const allKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('inst_zones_history_')) {
+                allKeys.push(k);
+            }
+        }
+        if (allKeys.length === 0) return;
+
+        // Calcular fechas a revisar (hoy + ayer + anteayer)
+        const daysToCheck = [];
+        for (let d = 0; d <= 2; d++) {
+            const dt = new Date();
+            dt.setDate(dt.getDate() - d);
+            daysToCheck.push(
+                dt.getFullYear() + '-' +
+                String(dt.getMonth()+1).padStart(2,'0') + '-' +
+                String(dt.getDate()).padStart(2,'0')
+            );
+        }
+
+        for (const histKey of allKeys) {
+            const sym = histKey.replace('inst_zones_history_', '');
+
+            try {
+                const raw = localStorage.getItem(histKey);
+                if (!raw) continue;
+                const history = JSON.parse(raw);
+
+                // Verificar si hay zonas pendientes en los últimos 3 días
+                let hasPending = false;
+                daysToCheck.forEach(day => {
+                    if ((history[day] || []).some(z => !z.mitigated && z.status !== 'mitigated')) {
+                        hasPending = true;
+                    }
+                });
+                if (!hasPending) continue;
+
+                // Obtener rango de precios (low/high de últimas velas) del símbolo
+                const priceRange = await fetchPriceRangeForSymbol(sym);
+                if (!priceRange || !priceRange.price) continue;
+
+                const { price: currentPrice, low: candleLow, high: candleHigh } = priceRange;
+
+                let anyMitigated = false;
+
+                daysToCheck.forEach(day => {
+                    (history[day] || []).forEach(zone => {
+                        if (zone.mitigated || zone.status === 'mitigated') return;
+
+                        const isAsk  = zone.side === 'ask';
+                        const buffer = INST_CONFIG.mitigationPct;
+
+                        // ── Verificación con LOW/HIGH de vela ──
+                        // Usando el rango de la vela se detectan toques que el precio spot
+                        // habría perdido por ser más rápidos que el intervalo de chequeo
+                        //
+                        // ASK: el high de la vela llegó hasta o superó la zona
+                        // BID: el low  de la vela bajó hasta o por debajo de la zona
+                        const touched = isAsk
+                            ? candleHigh >= zone.price * (1 - buffer)
+                            : candleLow  <= zone.price * (1 + buffer);
+
+                        if (!touched) return;
+
+                        // Precio real de toque = el que cruzó la zona
+                        const touchPrice = isAsk ? candleHigh : candleLow;
+
+                        zone.mitigated  = true;
+                        zone.status     = 'mitigated';
+                        zone.touchPrice = touchPrice;
+                        zone.touchTime  = new Date().toISOString();
+                        anyMitigated    = true;
+
+                        console.log(`💥 [${sym}] ${zone.side.toUpperCase()} @ ${formatPrice(zone.price)} → tocó ${formatPrice(currentPrice)}`);
+
+                        // ── Alerta visual en pantalla ──
+                        // Mostrar para CUALQUIER par (no solo el activo)
+                        const zoneForAlert = { ...zone, side: zone.side };
+                        showMitigationAlert(zoneForAlert, currentPrice);
+
+                        // Si es un par diferente al activo, mostrar notificación extra
+                        if (sym !== symbol) {
+                            const n = document.createElement('div');
+                            n.style.cssText = `position:fixed;top:70px;left:50%;transform:translateX(-50%);
+                                background:rgba(255,85,85,0.92);color:#fff;padding:10px 18px;
+                                border-radius:8px;font-size:12px;z-index:10010;
+                                font-family:'Consolas',monospace;box-shadow:0 4px 20px rgba(0,0,0,0.5);
+                                animation:slideInDown 0.3s ease;`;
+                            n.innerHTML = `💥 <strong>${sym}</strong> — Zona ${zone.side.toUpperCase()} mitigada @ <strong>${formatPrice(zone.price)}</strong>`;
+                            document.body.appendChild(n);
+                            setTimeout(() => { n.style.opacity='0'; setTimeout(()=>n.remove(),400); }, 6000);
+                        }
+
+                        // ── Telegram — SIEMPRE, para cualquier par ──
+                        if (typeof window.TG !== 'undefined' && window.TG.cfg && window.TG.cfg.enabled) {
+                            const isBidZone = zone.side === 'bid';
+                            const diffPct   = (((zone.touchPrice - zone.price)/zone.price)*100).toFixed(3);
+                            const msg = [
+                                `💥 ZONA MITIGADA`,
+                                ``,
+                                `Par: ${sym}`,
+                                `${isBidZone ? 'SOPORTE BID TOCADO' : 'RESISTENCIA ASK TOCADA'}`,
+                                ``,
+                                `Zona guardada: ${formatPrice(zone.price)}`,
+                                `Precio de toque: ${formatPrice(zone.touchPrice)}`,
+                                `Diferencia: ${diffPct}%`,
+                                `Volumen zona: ${formatUsdt(zone.totalUsdt || 0)} USDT`,
+                                ``,
+                                `Hora: ${new Date().toLocaleTimeString('es-ES')}`,
+                                `Dia: ${zone.date || getLocalDate()}`,
+                            ].join('\n');
+
+                            window.TG.send(msg).then(ok => {
+                                if (!ok) console.warn(`[${sym}] Telegram mitigation failed`);
+                                else console.log(`✅ [${sym}] Telegram enviado: ${zone.side} @ ${formatPrice(zone.price)}`);
+                            });
+                        } else {
+                            console.warn(`[${sym}] TG no disponible. enabled:`, window.TG?.cfg?.enabled);
+                        }
+                    });
+                });
+
+                if (anyMitigated) {
+                    localStorage.setItem(histKey, JSON.stringify(history));
+
+                    // Refrescar panel si el BT está abierto y muestra este símbolo
+                    const btOverlay = document.getElementById('bt-overlay');
+                    if (btOverlay && btOverlay.style.display !== 'none') {
+                        if (typeof BT !== 'undefined') {
+                            BT.allHistory = BT.getAllSymbolsHistory();
+                            if (typeof renderBtSidebarContent === 'function') renderBtSidebarContent();
+                            if (typeof updateBtStatsBar === 'function') updateBtStatsBar();
+                        }
+                    }
+                    // Refrescar panel de zonas
+                    if (sym === symbol) renderZonesPanel();
+                }
+
+            } catch(e) {
+                console.warn(`checkSavedZonesMitigation error [${sym}]:`, e);
+            }
         }
     }
     window.checkSavedZonesMitigation = checkSavedZonesMitigation;
@@ -2365,10 +2841,16 @@ document.addEventListener('DOMContentLoaded',function(){const largeInput=documen
         // ✅ Ahora corre AMBAS verificaciones:
         //    - checkZoneMitigation: zonas activas en tiempo real
         //    - checkSavedZonesMitigation: zonas guardadas en localStorage
+        // ── Intervalo de respaldo (por si el WS falla) ──
+        // El sistema principal es el WS en tiempo real via checkZonesForSymbol()
+        // Este intervalo solo hace chequeo de seguridad cada 10s
         zoneMitigationInterval = setInterval(() => {
-            checkZoneMitigation();
-            checkSavedZonesMitigation();
+            checkZoneMitigation();   // zonas activas del par actual
         }, 2000);
+
+        // Sincronizar watchlist de WS al arrancar y cada 30s
+        setTimeout(() => syncSymbolWatchlist(), 2000);
+        setInterval(() => syncSymbolWatchlist(), 30000);
 
         // Los Sets savedZonePrices/drawnZonePrices son de SESIÓN
         // Al arrancar empiezan vacíos → "✅ Guardada" solo aparece
@@ -2518,13 +3000,15 @@ const TG = {
     },
 
     notifyZoneSaved(zone) {
-        const isBid = zone.side === 'bid';
-        const icon  = zone.tier === 'WHALE' ? '🐋' : zone.tier === 'INST' ? '🏛' : '📌';
-        const dist  = markPriceFutures ? ((zone.price - markPriceFutures) / markPriceFutures * 100).toFixed(2) : '0';
+        const isBid   = zone.side === 'bid';
+        const icon    = zone.tier === 'WHALE' ? '🐋' : zone.tier === 'INST' ? '🏛' : '📌';
+        const zoneSym = zone._symbol || zone.symbol || symbol;
+        const dist    = markPriceFutures && zoneSym === symbol
+            ? ((zone.price - markPriceFutures) / markPriceFutures * 100).toFixed(2) : '—';
         const sign  = parseFloat(dist) >= 0 ? '+' : '';
         const lines = [
             `${icon} ZONA GUARDADA`,
-            `Par: ${symbol}`,
+            `Par: ${zoneSym}`,
             `${isBid ? 'SOPORTE BID' : 'RESISTENCIA ASK'}`,
             `Precio: ${formatPrice(zone.price)}`,
             `Volumen: ${formatUsdt(zone.totalUsdt)} USDT`,
