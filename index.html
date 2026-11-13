@@ -781,7 +781,7 @@ setInterval(()=>{
 // ===================================================
 // VARIABLES Y CONFIGURACIÓN GLOBAL
 // ===================================================
-console.log('%c🔖 ORDERBOOK v195', 'background:#26d67c;color:#000;font-weight:bold;padding:2px 8px;border-radius:4px;');
+console.log('%c🔖 ORDERBOOK v196', 'background:#26d67c;color:#000;font-weight:bold;padding:2px 8px;border-radius:4px;');
 // Cargar símbolo desde localStorage (compatible con file://)
 let symbol = "BTCUSDT";
 try {
@@ -10818,15 +10818,25 @@ const MapaLiq = (function(){
           // "dominante o no": así se ve de un vistazo cuál pesa más
           const esDominante=(wll.usd===maxUsd);
           const rel=Math.min(1, wll.usd/maxUsd);
-          const lw=1+rel*2.4;
-          const alphaW=0.30+rel*0.45;
-          const colLine=bid?`rgba(77,163,255,${alphaW})`:`rgba(192,132,252,${alphaW})`;
-          const colTxt =bid?"#9cc8ff":"#dcb8ff";
-          cx.strokeStyle=colLine;
-          cx.lineWidth=lw;
-          cx.setLineDash([9,6]);
+          // [v196] FUERZA 1–5: tamaño frente al mayor + extra si lleva tiempo (≥15 min) o ya le ejecutaron (⚔)
+          const _edadMin=(Date.now()-(wll.t0||Date.now()))/60000;
+          let fz=rel + (_edadMin>=15?0.12:0) + ((wll.ejec||0)>=Math.max(20000,wll.usd*0.05)?0.12:0);
+          const nivel=Math.max(1,Math.min(5,Math.ceil(Math.min(1,fz)*5)));
+          // paleta de menos a más fuerza: compra azul oscuro → celeste brillante · venta morado oscuro → lila brillante
+          const PAL_B=['46,90,140','62,124,190','77,163,255','120,200,255','170,230,255'];
+          const PAL_S=['92,64,140','130,88,200','170,115,240','205,150,255','235,195,255'];
+          const rgb=(bid?PAL_B:PAL_S)[nivel-1];
+          const lw=[1,1.4,2,2.6,3.2][nivel-1];
+          const alphaW=[0.45,0.6,0.75,0.9,1][nivel-1];
+          const colLine=`rgba(${rgb},${alphaW})`;
+          const colTxt =`rgb(${rgb})`;
+          // línea de PUNTOS redondos; los fuertes con halo suave detrás
+          if(nivel>=4){ cx.strokeStyle=`rgba(${rgb},${nivel===5?0.18:0.10})`; cx.lineWidth=lw+5; cx.setLineDash([]);
+            cx.beginPath(); cx.moveTo(0,y); cx.lineTo(w-axisPad,y); cx.stroke(); }
+          cx.strokeStyle=colLine; cx.lineWidth=lw; cx.lineCap='round';
+          cx.setLineDash([0.1, [7,6,5,5,4][nivel-1]+lw]);
           cx.beginPath(); cx.moveTo(0,y); cx.lineTo(w-axisPad,y); cx.stroke();
-          cx.setLineDash([]);
+          cx.setLineDash([]); cx.lineCap='butt';
           // etiqueta sobre chip oscuro (legible encima del heatmap)
           // [AÑADIDO v36] etiquetas de muro legibles: fuente 12px bold, chip con más contraste y padding
           // [AÑADIDO v49] etiqueta EN LA IZQUIERDA de siempre, pero clavada a la altura de la
@@ -10849,11 +10859,12 @@ const MapaLiq = (function(){
           const cuerpo=`🐋 ${bid?"COMPRA":"VENTA"} ${fmtP(wll.price)} · ${usdF(wll.usd)} · ${_edad}${_ej}${_aguanta?" · 🛡 AGUANTA":""}`;
           const starW=esDominante?cx.measureText("★ ").width:0;
           const cuerpoW=cx.measureText(cuerpo).width;
-          const tw=starW+cuerpoW;
+          const barW=5*5+6;                                   // [v196] medidor de fuerza ▮▮▮▯▯
+          const tw=starW+cuerpoW+barW;
           const x0=11;
           cx.fillStyle="rgba(3,6,12,0.94)";
           cx.fillRect(x0-7, y-10, tw+14, 20);
-          cx.strokeStyle=esDominante?"rgba(255,212,0,0.9)":colLine; cx.lineWidth=esDominante?1.5:1;
+          cx.strokeStyle=esDominante?"rgba(255,212,0,0.9)":`rgba(${rgb},${Math.max(0.6,alphaW)})`; cx.lineWidth=esDominante?1.5:1;
           cx.strokeRect(x0-7, y-10, tw+14, 20);
           if(esDominante){
             cx.fillStyle="#ffd400";
@@ -10861,6 +10872,8 @@ const MapaLiq = (function(){
           }
           cx.fillStyle=colTxt;
           cx.fillText(cuerpo, x0+starW, y);
+          for(let q=0;q<5;q++){ cx.fillStyle= q<nivel ? `rgb(${rgb})` : 'rgba(120,130,150,0.25)';
+            cx.fillRect(x0+starW+cuerpoW+6+q*5, y+4-(q+1)*1.6, 3, (q+1)*1.6+1); }
           cx.textBaseline="alphabetic";   // restaurar pa el resto de capas
         }
         cx.lineWidth=1;
