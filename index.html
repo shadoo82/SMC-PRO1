@@ -568,6 +568,14 @@
       <input type="number" id="ema-period" value="100" min="5" max="500" step="5"
              style="width:55px;padding:2px 4px;background:#1a1a2e;color:#e0e0e0;border:1px solid #444;border-radius:4px;font-size:11px;"
              onchange="window._emaPeriod=parseInt(this.value)||100; if(window.candlesData?.length>0){const e=calculateEMA(window.candlesData,window._emaPeriod);if(emaSeries)emaSeries.setData(e);}" />
+      <!-- [v195] SEGUNDA EMA: periodo, color y on/off; se guarda en el navegador -->
+      <span id="ema2-box" style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;">
+        <label for="ema2-period" style="cursor:pointer;" onclick="ema2Toggle()" title="Clic para mostrar / ocultar la 2ª EMA">EMA 2:</label>
+        <input type="number" id="ema2-period" value="50" min="2" max="500" step="1" onchange="ema2Aplicar()"
+               style="width:50px;padding:2px 4px;background:#1a1a2e;color:#e0e0e0;border:1px solid #444;border-radius:4px;font-size:11px;" />
+        <input type="color" id="ema2-color" value="#13a3b8" onchange="ema2Aplicar()" title="Color de la 2ª EMA"
+               style="width:22px;height:20px;padding:0;border:1px solid #444;border-radius:4px;background:#1a1a2e;cursor:pointer;" />
+      </span>
   </div>
 
   <div class="chart-container" id="chart-container">
@@ -773,7 +781,7 @@ setInterval(()=>{
 // ===================================================
 // VARIABLES Y CONFIGURACIÓN GLOBAL
 // ===================================================
-console.log('%c🔖 ORDERBOOK v194', 'background:#26d67c;color:#000;font-weight:bold;padding:2px 8px;border-radius:4px;');
+console.log('%c🔖 ORDERBOOK v195', 'background:#26d67c;color:#000;font-weight:bold;padding:2px 8px;border-radius:4px;');
 // Cargar símbolo desde localStorage (compatible con file://)
 let symbol = "BTCUSDT";
 try {
@@ -1273,6 +1281,7 @@ class BinanceWebSocketManager {
                     if (kline.x) {
                         const ema = calculateEMA(candlesData, window._emaPeriod||100);
                         if (emaSeries) emaSeries.setData(ema);
+                        if (window.ema2Series) window.ema2Series.setData(calculateEMA(candlesData, window._ema2Period||50));   // [v195]
                     }
                 }
             } catch(err) { console.error('Error procesando kline:', err); }
@@ -1436,6 +1445,7 @@ async function initializeWebSockets() {
     if (emaSeries) {
         try { emaSeries.setData([]); } catch(_) {}
     }
+    if (window.ema2Series) { try { window.ema2Series.setData([]); } catch(_) {} }   // [v195]
     // Limpiar líneas de zonas del par anterior
     if (window.clearAllInstLines) window.clearAllInstLines();
     if (window.SMC) { window.SMC.clearLines(); window.SMC._clearOBRects(); window.SMC.lastCandle = 0; }
@@ -1975,7 +1985,7 @@ function initializeChart() {
     try{
         const chartContainer=document.getElementById('chart-container'); if(!chartContainer)return;
         const loadingMsg=chartContainer.querySelector('.loading-message'); if(loadingMsg){loadingMsg.style.display='block';loadingMsg.textContent='Inicializando gráfico...';}
-        if(chart){chart.remove();chart=null;candlestickSeries=null;emaSeries=null;}
+        if(chart){chart.remove();chart=null;candlestickSeries=null;emaSeries=null;window.ema2Series=null;}
         chart=LightweightCharts.createChart(chartContainer,{
             width:chartContainer.offsetWidth,height:chartContainer.offsetHeight||Math.max(700,Math.round(innerHeight*0.78)), // [AÑADIDO v22] altura dinámica
             layout:{backgroundColor:'#000000',textColor:'#d1d4dc'},
@@ -1999,6 +2009,7 @@ function initializeChart() {
             lastValueVisible: true,
         });
         emaSeries=chart.addLineSeries({color:'#ff9800',lineWidth:2,priceLineVisible:false});
+        window.ema2Series=chart.addLineSeries({color:(window._ema2Color||'#13a3b8'),lineWidth:2,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,visible:window._ema2On!==false});   // [v195] 2ª EMA
 
         // contextmenu registrado una sola vez en init()
     }catch(err){
@@ -2029,7 +2040,7 @@ async function loadHistoricalKlines() {
         const data=await response.json();
         candlesData=data.map(kline=>({time:Math.floor(kline[0]/1000),open:parseFloat(kline[1]),high:parseFloat(kline[2]),low:parseFloat(kline[3]),close:parseFloat(kline[4]),volume:parseFloat(kline[5]),usdt:parseFloat(kline[7]),tb:parseFloat(kline[10])})); // [AÑADIDO MAPA-LIQ] tb = taker buy quote vol (kline[10]) pa el modelo de liquidez
         if(candlesData.length>window._maxVelas)candlesData=candlesData.slice(-window._maxVelas);   // [v184] antes 600 · [OPT v104] 1000→600 velas: menos RAM, sigue sobrando para el encuadre y el modelo
-        if(candlestickSeries){window.candlesData = candlesData; candlestickSeries.setData(fillCandleGaps(candlesData,intervalToSeconds(currentInterval)));const ema100=calculateEMA(candlesData,window._emaPeriod||100);if(emaSeries)emaSeries.setData(ema100);const loadingMsg=document.querySelector('.loading-message');if(loadingMsg)loadingMsg.style.display='none';
+        if(candlestickSeries){window.candlesData = candlesData; candlestickSeries.setData(fillCandleGaps(candlesData,intervalToSeconds(currentInterval)));const ema100=calculateEMA(candlesData,window._emaPeriod||100);if(emaSeries)emaSeries.setData(ema100);if(window.ema2Series)window.ema2Series.setData(calculateEMA(candlesData,window._ema2Period||50));const loadingMsg=document.querySelector('.loading-message');if(loadingMsg)loadingMsg.style.display='none';
         // Ajustar precisión decimal según el precio del par
         if (candlesData.length > 0) {
             updateChartPriceFormat(candlesData[candlesData.length-1].close);
@@ -2578,7 +2589,7 @@ function agruparHeaderControls(){
         const fs2=document.getElementById('ml-fsls');
         if(yaCentro&&fs2&&fs2.parentElement===hdr) yaCentro.appendChild(fs2);
         if(yaDcha){
-            hdr.querySelectorAll(':scope > .interval-selector, :scope > label[for="ema-period"], :scope > #ema-period')
+            hdr.querySelectorAll(':scope > .interval-selector, :scope > label[for="ema-period"], :scope > #ema-period, :scope > #ema2-box')
                .forEach(el=>yaDcha.appendChild(el));
         }
         return;
@@ -2600,6 +2611,7 @@ function agruparHeaderControls(){
         r.appendChild(interval);
         if(emaLbl) r.appendChild(emaLbl);
         if(emaInp) r.appendChild(emaInp);
+        const ema2b=document.getElementById('ema2-box'); if(ema2b) r.appendChild(ema2b);   // [v195]
     }
 }
 document.addEventListener('DOMContentLoaded', ()=>setTimeout(agruparHeaderControls, 1200));
@@ -7684,6 +7696,7 @@ function updateChartPriceFormat(price) {
         if (emaSeries) emaSeries.applyOptions({
             priceFormat: { type: 'price', precision, minMove }
         });
+        if (window.ema2Series) window.ema2Series.applyOptions({ priceFormat: { type: 'price', precision, minMove } });   // [v195]
     } catch(e) {}
 }
 
@@ -13249,6 +13262,24 @@ function mlxGrupo(t){ const g=t.parentElement; g.classList.toggle('abierto');
   window.tfCerrar=function(){ const p=document.getElementById('tf-panel'); if(p) p.classList.remove('abierto'); };
   document.addEventListener('click',()=>tfCerrar());
   document.addEventListener('keydown',e=>{ if(e.key==='Escape') tfCerrar(); });
+})();
+</script>
+<script>
+/* [v195] 2ª EMA configurable: periodo + color (+ clic en "EMA 2:" para ocultar/mostrar). Se guarda. */
+(function(){
+  try{ const g=JSON.parse(localStorage.getItem('ema2Cfg')||'{}'); window._ema2Period=g.p||50; window._ema2Color=g.c||'#13a3b8'; window._ema2On=g.on!==false; }catch(_){ window._ema2Period=50; window._ema2Color='#13a3b8'; window._ema2On=true; }
+  const sync=()=>{ const p=document.getElementById('ema2-period'), c=document.getElementById('ema2-color'), l=document.querySelector('label[for="ema2-period"]');
+    if(p) p.value=window._ema2Period; if(c) c.value=window._ema2Color;
+    if(l){ l.style.color=window._ema2On? window._ema2Color : '#666'; l.style.textDecoration=window._ema2On? 'none':'line-through'; } };
+  const guardar=()=>{ try{ localStorage.setItem('ema2Cfg',JSON.stringify({p:window._ema2Period,c:window._ema2Color,on:window._ema2On})); }catch(_){} };
+  window.ema2Aplicar=function(){
+    const p=parseInt(document.getElementById('ema2-period').value); window._ema2Period= (p>=2&&p<=500)? p : 50;
+    window._ema2Color=document.getElementById('ema2-color').value||'#13a3b8';
+    if(window.ema2Series){ window.ema2Series.applyOptions({color:window._ema2Color, visible:window._ema2On});
+      if(window.candlesData && window.candlesData.length) window.ema2Series.setData(calculateEMA(window.candlesData, window._ema2Period)); }
+    guardar(); sync(); };
+  window.ema2Toggle=function(){ window._ema2On=!window._ema2On; if(window.ema2Series) window.ema2Series.applyOptions({visible:window._ema2On}); guardar(); sync(); };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',sync); else sync();
 })();
 </script>
 </body>
