@@ -150,6 +150,26 @@
     body.fullscreen-active #fs-center-group { flex:0 0 auto !important; }
     body.fullscreen-active #fs-right-group  { flex:1 1 0 !important; justify-content:flex-end !important; }
     /* [AÑADIDO v59] barra de botones del maximizado un poco más grande */
+    /* [v191] barra de botones en grupos + panel de ajustes */
+    .mlx-bar{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:stretch;}
+    .mlx-grp{display:flex;flex-wrap:wrap;align-items:center;gap:4px;background:#0d131d;border:1px solid #1e2a3c;border-radius:8px;padding:3px 6px;}
+    .mlx-t{font-size:10px;color:#9fb3cf;text-transform:uppercase;letter-spacing:.6px;margin-right:2px;cursor:pointer;user-select:none;padding:3px 4px;border-radius:5px;display:inline-flex;align-items:center;gap:4px;}
+    .mlx-t:hover{background:#16202f;color:#fff;}
+    .mlx-t i{font-style:normal;transition:transform .2s;display:inline-block;color:#37c0ff;}
+    .mlx-grp.abierto .mlx-t i{transform:rotate(180deg);}
+    .mlx-n{font-weight:700;color:#37c0ff;font-size:10px;}
+    .mlx-items{display:none;flex-wrap:wrap;align-items:center;gap:4px;}
+    .mlx-grp.abierto .mlx-items{display:inline-flex;}   /* [v192] cada grupo se despliega a la derecha al hacer clic en su nombre */
+    .mlx-bar .liquidity-btn{padding:3px 8px;font-size:11px;margin:0;}
+    .mlx-aj{background:linear-gradient(90deg,rgba(55,192,255,.18),rgba(55,192,255,.06))!important;border-color:#37c0ff!important;color:#9fdcff!important;font-weight:700;}
+    #mlx-panel{display:none;position:fixed;z-index:10050;width:300px;background:#0d131d;border:1px solid #2a3a54;border-radius:10px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.7);font-family:Consolas,monospace;color:#c7d3e3;}
+    #mlx-panel.abierto{display:block;}
+    .mlx-ph{display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-bottom:4px;color:#fff;}
+    .mlx-x{cursor:pointer;color:#8b93a6;}
+    .mlx-sec{font-size:10px;color:#37c0ff;text-transform:uppercase;letter-spacing:.5px;margin:9px 0 4px;border-top:1px solid #1e2a3c;padding-top:7px;}
+    .mlx-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:4px 0;font-size:11px;color:#9aa8bd;}
+    .mlx-row select.liquidity-btn{min-width:150px;margin:0;}
+    .mlx-sl{display:flex;align-items:center;gap:4px;} .mlx-sl small{font-size:9px;color:#6f7f99;} .mlx-sl input{width:80px!important;}
     #ml-fsbar { padding:6px 12px !important; gap:6px !important; width:max-content; max-width:96vw; justify-content:center; }   /* [v154] cabe entera */
     #ml-fsbar .liquidity-btn { padding:5px 10px !important; font-size:13px !important; }
     #ml-fsbar select.liquidity-btn { font-size:12px !important; }
@@ -609,27 +629,40 @@
           <input type="text" id="very-large-threshold" value="100M" style="font-family:'Consolas',monospace;">
           <button class="liquidity-btn" onclick="updateThresholds()">Aplicar</button>
         </div>
-        <div>
-          <button class="liquidity-btn" id="smc-toggle" onclick="smcToggle(this)">📐 SMC: OFF</button>
-          <button class="liquidity-btn" onclick="toggleSoundAlerts()" id="sound-toggle">🔊 Sonido: ON</button>
-          <button class="liquidity-btn" onclick="toggleClusters()" id="cluster-toggle">📊 Mostrar Clusters</button>
-          <!-- [AÑADIDO MAPA-LIQ] toggles del Mapa de Liquidez portado -->
-          <span style="display:inline-block;width:1px;height:14px;background:#444;margin:0 4px;vertical-align:middle;"></span>
-          <button class="liquidity-btn" id="ml-heatmap" data-ml="heatmap" onclick="MapaLiq.toggle('heatmap',this)" title="Mapa de calor de liquidez estimada (fondo)">🌡 Heatmap</button>
-          <button class="liquidity-btn" id="ml-libro" data-ml="libro" onclick="MapaLiq.toggle('libro',this)" title="Libro REAL de órdenes límite (estilo Coinglass). Se apaga el 🌡 Heatmap">📖 Libro</button>
-          <button class="liquidity-btn" id="ml-heat" data-ml="heat" onclick="MapaLiq.toggle('heat',this)" title="Zonas de calor: fusión de todas las señales (SHORT arriba / LONG abajo)">🔥 Calor</button>
-          <button class="liquidity-btn" id="ml-react" data-ml="react" onclick="MapaLiq.toggle('react',this)" title="Zonas donde el precio ya rechazó antes (liquidez probada)">⟲ Reacción</button>
-          <button class="liquidity-btn" id="ml-book" data-ml="book" onclick="MapaLiq.toggle('book',this)" title="Muros REALES del libro (persistentes, ★ = dominante)">🐋 Muros</button>
-          <button class="liquidity-btn" id="ml-vp" data-ml="vp" onclick="MapaLiq.toggle('vp',this)" title="Perfil de volumen real del rango visible (POC en ámbar)">📊 VRVP</button>
-          <button class="liquidity-btn" id="ml-macro" data-ml="macro" onclick="MapaLiq.toggle('macro',this)" title="Zonas de temporalidad mayor (4h/1d)">🟣 Macro</button>
-          <button class="liquidity-btn" id="ml-targets" data-ml="targets" onclick="MapaLiq.toggle('targets',this)" title="Panel de objetivos: lo que el precio busca, por prioridad">🎯 Objetivos</button>
-          <button class="liquidity-btn ml-on" data-ml-inst onclick="toggleInstLines()" title="Ocultar líneas de zonas institucionales reales">📍 Z.Reales</button><!-- [AÑADIDO v28] -->
+        <!-- [v191] barra REORGANIZADA en grupos; los ajustes (selectores y barra) van en el panel ⚙ Ajustes -->
+        <div class="mlx-bar">
+          <div class="mlx-grp" data-g="general"><span class="mlx-t" onclick="mlxGrupo(this)" title="Clic para desplegar / plegar">General <b class="mlx-n"></b><i>▸</i></span><span class="mlx-items"><button class="liquidity-btn" id="smc-toggle" onclick="smcToggle(this)">📐 SMC: OFF</button><button class="liquidity-btn" onclick="toggleSoundAlerts()" id="sound-toggle">🔊 Sonido: ON</button><button class="liquidity-btn" onclick="toggleClusters()" id="cluster-toggle">📊 Mostrar Clusters</button></span></div>
+          <div class="mlx-grp" data-g="capas"><span class="mlx-t" onclick="mlxGrupo(this)" title="Clic para desplegar / plegar">Capas <b class="mlx-n"></b><i>▸</i></span><span class="mlx-items"><button class="liquidity-btn" id="ml-heatmap" data-ml="heatmap" onclick="MapaLiq.toggle('heatmap',this)" title="Mapa de calor de liquidez estimada (fondo)">🌡 Heatmap</button><button class="liquidity-btn" id="ml-libro" data-ml="libro" onclick="MapaLiq.toggle('libro',this)" title="Libro REAL de órdenes límite (estilo Coinglass). Se apaga el 🌡 Heatmap">📖 Libro</button><button class="liquidity-btn" id="ml-heat" data-ml="heat" onclick="MapaLiq.toggle('heat',this)" title="Zonas de calor: fusión de todas las señales (SHORT arriba / LONG abajo)">🔥 Calor</button><button class="liquidity-btn" id="ml-react" data-ml="react" onclick="MapaLiq.toggle('react',this)" title="Zonas donde el precio ya rechazó antes (liquidez probada)">⟲ Reacción</button><button class="liquidity-btn" id="ml-book" data-ml="book" onclick="MapaLiq.toggle('book',this)" title="Muros REALES del libro (persistentes, ★ = dominante)">🐋 Muros</button><button class="liquidity-btn" id="ml-vp" data-ml="vp" onclick="MapaLiq.toggle('vp',this)" title="Perfil de volumen real del rango visible (POC en ámbar)">📊 VRVP</button><button class="liquidity-btn" id="ml-macro" data-ml="macro" onclick="MapaLiq.toggle('macro',this)" title="Zonas de temporalidad mayor (4h/1d)">🟣 Macro</button><button class="liquidity-btn" id="ml-targets" data-ml="targets" onclick="MapaLiq.toggle('targets',this)" title="Panel de objetivos: lo que el precio busca, por prioridad">🎯 Objetivos</button><button class="liquidity-btn ml-on" data-ml-inst onclick="toggleInstLines()" title="Ocultar líneas de zonas institucionales reales">📍 Z.Reales</button></span></div>
+          <div class="mlx-grp" data-g="analisis"><span class="mlx-t" onclick="mlxGrupo(this)" title="Clic para desplegar / plegar">Análisis <b class="mlx-n"></b><i>▸</i></span><span class="mlx-items"><button class="liquidity-btn" onclick="SMCIntra.alternar()" title="Pinta/quita los niveles SMC en el gráfico">📐 Líneas</button><button class="liquidity-btn" onclick="SMCIntra.ver()" title="Objetivos intradía por acción del precio: estructura, pools de liquidez, sesiones, FVG y OTE">🎯 SMC</button><button class="liquidity-btn" onclick="MapaLiq.verPrecision()" title="Mide si los muros aciertan: rebote vs ruptura, por tamaño y por edad">📊 Precisión</button><button class="liquidity-btn" onclick="MapaLiq.abrirMapaLibro()" title="Mapa de calor del libro a pantalla completa (estilo Coinglass)">🗺 Mapa libro</button></span></div>
+          <div class="mlx-grp"><button class="liquidity-btn mlx-aj" onclick="mlxAjustes(this,event)" title="Estilo y zonas del heatmap, duración y tamaño de muros, confluencia">⚙ Ajustes ▴</button></div>
+          <div class="mlx-grp" data-g="mas"><span class="mlx-t" onclick="mlxGrupo(this)" title="Clic para desplegar / plegar">Más <b class="mlx-n"></b><i>▸</i></span><span class="mlx-items"><button class="liquidity-btn" id="tg-config-btn"
+                  style="background:linear-gradient(90deg,rgba(34,158,217,0.3),rgba(0,100,180,0.2));border-color:#229ED9;color:#7ecef4;"
+                  onclick="toggleTgPanel()">✈️ Telegram</button><button class="liquidity-btn" id="bt-open-btn"
+                  style="background:linear-gradient(90deg,rgba(156,39,176,0.3),rgba(103,58,183,0.2));border-color:#9c27b0;color:#ce93d8;"
+                  onclick="openBacktesting()">📈 Backtesting</button><button class="liquidity-btn" id="inst-zones-btn" style="background:linear-gradient(90deg,rgba(156,39,176,0.3),rgba(33,150,243,0.3));border-color:#9c27b0;color:#ce93d8;"
+                  onclick="toggleInstZonesPanel()">🏛️ Zonas Inst.</button></span></div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-          <select id="ml-conf" class="liquidity-btn ml-conf-sel" onchange="MapaLiq.setConf(this.value)" title="Confluencia mínima de las zonas de calor">
-            <option value="3">Confl: las 3</option><option value="2">Confl: 2 de 3</option>
-            <option value="poc">Confl: +POC</option><option value="macro">Confl: +Macro</option><option value="off">Confl: off</option>
-          </select>
-          <select id="ml-usd" class="liquidity-btn ml-usd-sel" onchange="MapaLiq.setMinUsd(this.value)" title="Tamaño mínimo del muro en USD">
+  <div id="alert-container" class="alert-container hide-when-fullscreen"></div>
+  <!-- [v191] PANEL ⚙ AJUSTES (uno solo, sirve para la barra normal y la de pantalla completa) -->
+  <div id="mlx-panel" onclick="event.stopPropagation()">
+    <div class="mlx-ph">⚙ Ajustes <span class="mlx-x" onclick="mlxCerrar()">✕</span></div>
+    <div class="mlx-sec">🌡 Heatmap</div>
+    <div class="mlx-row"><span>Estilo</span><select class="liquidity-btn ml-estilo-sel" onchange="MapaLiq.setEstiloHeat(this.value)" title="🌡 Heatmap: nítido = rayas finas en el centro de cada zona (estilo Coinglass) · bloques = como antes"><option value="nitido">Estilo: nítido</option><option value="bloques">Estilo: bloques</option></select></div>
+    <div class="mlx-row"><span>Zonas principales</span><select id="ml-nit" class="liquidity-btn ml-nit-sel" onchange="MapaLiq.setNitidez(this.value)" title="Cuántas zonas del heatmap se pintan. Menos = más limpio. Las que coinciden con liquidez real del libro tienen prioridad.">
+            <option value="3">Zonas: 3</option><option value="5">Zonas: 5</option>
+            <option value="8">Zonas: 8</option><option value="12">Zonas: 12</option>
+            <option value="20">Zonas: 20</option><option value="0">Zonas: todas</option>
+          </select></div>
+    <div class="mlx-row"><span>Intensidad</span><span class="mlx-sl"><small>resaltar</small><input id="ml-gamma" class="ml-gamma-sl" type="range" min="1" max="3" step="0.1" style="width:80px;vertical-align:middle;accent-color:#37c0ff;cursor:pointer;" oninput="MapaLiq.setGamma(this.value)" title="Desvanece las celdas débiles del heatmap"><small>desvanecer</small></span></div>
+    <div class="mlx-sec">📖 Muros en vivo (Libro y Heatmap)</div>
+    <div class="mlx-row"><span>Duración mínima</span><select class="liquidity-btn ml-libmin-sel" onchange="MapaLiq.setLibroMin(this.value)" title="📖 Libro: solo muros que duran al menos estos minutos seguidos (quita los puntos sueltos)"><option value="1">Muros: todos</option><option value="3">Muros ≥3 min</option><option value="5" selected>Muros ≥5 min</option><option value="10">Muros ≥10 min</option><option value="15">Muros ≥15 min</option><option value="30">Muros ≥30 min</option></select></div>
+    <div class="mlx-sec">🐋 Muros</div>
+    <div class="mlx-row"><span>Tamaño mínimo</span><select id="ml-usd" class="liquidity-btn ml-usd-sel" onchange="MapaLiq.setMinUsd(this.value)" title="Tamaño mínimo del muro en USD">
             <option value="0">Muro: AUTO 🎯</option>
             <option value="100000">Muro ≥ $100K</option><option value="250000">Muro ≥ $250K</option>
             <option value="500000">Muro ≥ $500K</option><option value="1000000">Muro ≥ $1M</option>
@@ -637,37 +670,13 @@
             <option value="10000000">Muro ≥ $10M</option><option value="15000000">Muro ≥ $15M</option>
             <option value="20000000">Muro ≥ $20M</option><option value="25000000">Muro ≥ $25M</option>
             <option value="50000000">Muro ≥ $50M</option>
-          </select>
-          <button class="liquidity-btn" onclick="SMCIntra.alternar()" title="Pinta/quita los niveles SMC en el gráfico">📐 Líneas</button>
-          <button class="liquidity-btn" onclick="SMCIntra.ver()" title="Objetivos intradía por acción del precio: estructura, pools de liquidez, sesiones, FVG y OTE">🎯 SMC</button>
-          <button class="liquidity-btn" onclick="MapaLiq.verPrecision()" title="Mide si los muros aciertan: rebote vs ruptura, por tamaño y por edad">📊 Precisión</button>
-          <select id="ml-nit" class="liquidity-btn ml-nit-sel" onchange="MapaLiq.setNitidez(this.value)" title="Cuántas zonas del heatmap se pintan. Menos = más limpio. Las que coinciden con liquidez real del libro tienen prioridad.">
-            <option value="3">Zonas: 3</option><option value="5">Zonas: 5</option>
-            <option value="8">Zonas: 8</option><option value="12">Zonas: 12</option>
-            <option value="20">Zonas: 20</option><option value="0">Zonas: todas</option>
-          </select>
-          <!-- [AÑADIDO v22] slider gamma: resaltar/desvanecer heatmap -->
-          <span style="display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;white-space:nowrap;">
-            <span style="font-size:9px;color:#888;">resaltar</span>
-            <input id="ml-gamma" class="ml-gamma-sl" type="range" min="1" max="3" step="0.1" style="width:80px;vertical-align:middle;accent-color:#37c0ff;cursor:pointer;" oninput="MapaLiq.setGamma(this.value)" title="Desvanece las celdas débiles del heatmap">
-            <span style="font-size:9px;color:#888;">desvanecer</span>
-          </span>
-          <!-- [FIN AÑADIDO MAPA-LIQ] -->
-          
-                    <button class="liquidity-btn" id="tg-config-btn"
-                  style="background:linear-gradient(90deg,rgba(34,158,217,0.3),rgba(0,100,180,0.2));border-color:#229ED9;color:#7ecef4;"
-                  onclick="toggleTgPanel()">✈️ Telegram</button>
-          <button class="liquidity-btn" id="bt-open-btn"
-                  style="background:linear-gradient(90deg,rgba(156,39,176,0.3),rgba(103,58,183,0.2));border-color:#9c27b0;color:#ce93d8;"
-                  onclick="openBacktesting()">📈 Backtesting</button>
-          <button class="liquidity-btn" id="inst-zones-btn" style="background:linear-gradient(90deg,rgba(156,39,176,0.3),rgba(33,150,243,0.3));border-color:#9c27b0;color:#ce93d8;"
-                  onclick="toggleInstZonesPanel()">🏛️ Zonas Inst.</button>
-        </div>
-      </div>
-    </div>
+          </select></div>
+    <div class="mlx-sec">🔥 Calor</div>
+    <div class="mlx-row"><span>Confluencia</span><select id="ml-conf" class="liquidity-btn ml-conf-sel" onchange="MapaLiq.setConf(this.value)" title="Confluencia mínima de las zonas de calor">
+            <option value="3">Confl: las 3</option><option value="2">Confl: 2 de 3</option>
+            <option value="poc">Confl: +POC</option><option value="macro">Confl: +Macro</option><option value="off">Confl: off</option>
+          </select></div>
   </div>
-
-  <div id="alert-container" class="alert-container hide-when-fullscreen"></div>
 
   <!-- [AÑADIDO v33] tablas Top Asks/Bids como panel DESPLEGABLE: plegado por defecto,
        clic en la cabecera pa abrir/cerrar, y el pin 📌 lo deja fijo abierto -->
@@ -761,7 +770,7 @@ setInterval(()=>{
 // ===================================================
 // VARIABLES Y CONFIGURACIÓN GLOBAL
 // ===================================================
-console.log('%c🔖 ORDERBOOK v168', 'background:#26d67c;color:#000;font-weight:bold;padding:2px 8px;border-radius:4px;');
+console.log('%c🔖 ORDERBOOK v193', 'background:#26d67c;color:#000;font-weight:bold;padding:2px 8px;border-radius:4px;');
 // Cargar símbolo desde localStorage (compatible con file://)
 let symbol = "BTCUSDT";
 try {
@@ -788,6 +797,7 @@ let chart = null;
 let candlestickSeries = null;
 let emaSeries = null;
 let candlesData = []; window.candlesData = candlesData;
+window._maxVelas = 1500;   // [v184] historial de velas: 600 → 1500 (máximo que da Binance Futuros en una sola petición)
 let lastChartUpdate = 0;
 let klineSocket = null;
 let lastCandle = null;
@@ -1250,7 +1260,7 @@ class BinanceWebSocketManager {
                     candlesData[candlesData.length-1] = newCandle;
                 } else if (!ult || newCandle.time > ult.time) {
                     candlesData.push(newCandle);
-                    if (candlesData.length > 600) candlesData.shift();
+                    if (candlesData.length > window._maxVelas) candlesData.shift();   // [v184] antes 600
                 }
                 if (kline.x) lastCandle = newCandle;
 
@@ -2003,7 +2013,7 @@ async function loadHistoricalKlines() {
                 const timer=setTimeout(()=>ctrl.abort(),10000);
                 response=await fetch(window._useSpotAPI
             ? `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${currentInterval}&limit=1000`
-            : `https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=${currentInterval}&limit=1000`,{signal:ctrl.signal});
+            : `https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=${currentInterval}&limit=1500`,{signal:ctrl.signal});   // [v184] 1000→1500
                 clearTimeout(timer);
                 if(!response.ok) throw new Error(`HTTP ${response.status}`);
                 break;
@@ -2015,7 +2025,7 @@ async function loadHistoricalKlines() {
         }
         const data=await response.json();
         candlesData=data.map(kline=>({time:Math.floor(kline[0]/1000),open:parseFloat(kline[1]),high:parseFloat(kline[2]),low:parseFloat(kline[3]),close:parseFloat(kline[4]),volume:parseFloat(kline[5]),usdt:parseFloat(kline[7]),tb:parseFloat(kline[10])})); // [AÑADIDO MAPA-LIQ] tb = taker buy quote vol (kline[10]) pa el modelo de liquidez
-        if(candlesData.length>600)candlesData=candlesData.slice(-600);   // [OPT v104] 1000→600 velas: menos RAM, sigue sobrando para el encuadre y el modelo
+        if(candlesData.length>window._maxVelas)candlesData=candlesData.slice(-window._maxVelas);   // [v184] antes 600 · [OPT v104] 1000→600 velas: menos RAM, sigue sobrando para el encuadre y el modelo
         if(candlestickSeries){window.candlesData = candlesData; candlestickSeries.setData(fillCandleGaps(candlesData,intervalToSeconds(currentInterval)));const ema100=calculateEMA(candlesData,window._emaPeriod||100);if(emaSeries)emaSeries.setData(ema100);const loadingMsg=document.querySelector('.loading-message');if(loadingMsg)loadingMsg.style.display='none';
         // Ajustar precisión decimal según el precio del par
         if (candlesData.length > 0) {
@@ -6297,7 +6307,7 @@ function startRealtimePriceLine() {
                         volume: 0, usdt: 0, tb: 0
                     });
                 }
-                if (candlesData.length > 600) candlesData.splice(0, candlesData.length-600);
+                if (candlesData.length > window._maxVelas) candlesData.splice(0, candlesData.length-window._maxVelas);   // [v184] antes 600
                 window.candlesData = candlesData;
                 last = candlesData[candlesData.length - 1];
                 try { candlestickSeries.setData(candlesData); } catch(_) {}
@@ -9228,7 +9238,7 @@ const MapaLiq = (function(){
     // ================================================================================
     const mask=new Uint8Array(R);
     const topN=S.topZonas||0;
-    if(!topN){ mask.fill(1); }
+    if(!topN){ mask.fill(1); S.zonasTop=[]; }
     else {
       // [FIX v130] Antes se agrupaban FILAS CONTIGUAS por encima de un corte. En el modelo las
       // bandas de liquidación forman un bloque continuo enorme, así que salían 1-2 "zonas" que
@@ -9242,19 +9252,20 @@ const MapaLiq = (function(){
       // perfil de trabajo, con las filas confirmadas por el libro real potenciadas ×2.2
       const tmp=new Float64Array(R);
       for(let r=0;r<R;r++) tmp[r]=prof[r]*(esReal(r)?2.2:1);
-      const anchoMax=Math.max(2, Math.round(R*0.022));   // ~5 filas de 220
-      let pintadas=0, conReal=0;
+      const anchoMax=Math.max(1, Math.round(R*0.009));   // [FIX v183] ~2 filas de 220: solo el NÚCLEO de la zona (antes ~5)
+      let pintadas=0, conReal=0; const _top=[];
       for(let n=0;n<topN;n++){
         let best=-1, bv=0;
         for(let r=0;r<R;r++){ if(tmp[r]>bv){ bv=tmp[r]; best=r; } }
         if(best<0 || bv<=gmax*0.02) break;   // ya solo queda ruido
         // ancho de la banda: hasta donde el perfil cae por debajo del 40% del pico
-        const lim=prof[best]*0.40;
+        const lim=prof[best]*0.65;   // [FIX v183] antes 40%: la banda se comía filas débiles a los lados
         let a=best, b=best;
         while(a>0     && best-a<anchoMax && prof[a-1]>=lim) a--;
         while(b<R-1   && b-best<anchoMax && prof[b+1]>=lim) b++;
         for(let r=a;r<=b;r++){ mask[r]=1; }
         if(esReal(best)) conReal++;
+        _top.push({p:lo+(best+0.5)*bucket, a, b, v:prof[best], real:esReal(best)});   // [v183] para las etiquetas de zona principal
         pintadas++;
         // borrar esta zona (con margen) para que el siguiente pico salga en otro sitio
         const a2=Math.max(0,a-anchoMax), b2=Math.min(R-1,b+anchoMax);
@@ -9262,6 +9273,7 @@ const MapaLiq = (function(){
       }
       S.zonasReales=conReal;
       S.zonasPintadas=pintadas;
+      S.zonasTop=_top;
     }
     S.rowMask=mask;
 
@@ -9646,6 +9658,143 @@ const MapaLiq = (function(){
   /* — 1 foto del libro cada ~2s, acumulada en el minuto en curso —
      Se graba SIEMPRE (aunque la capa esté apagada) para que al encenderla ya haya
      historia. Coste: leer dos Maps que ya están en memoria. */
+  /* [AÑADIDO v171] HISTORIA DEL LIBRO GUARDADA en el navegador (IndexedDB), hasta 3 días por par.
+     Cada minuto que termina se guarda (80 niveles más fuertes por lado, con su PRECIO real, así no
+     depende de la rejilla de esa sesión). Al abrir se carga y se pinta detrás de las velas. Solo se
+     usa para DIBUJAR y para la tabla del ratón: lo demás (zonas confirmadas por el libro…) no cambia. */
+  const HIST={sym:null, rows:[], db:null};
+  const HIST_DIAS=3;
+  function histDB(){
+    return new Promise(res=>{
+      if(HIST.db) return res(HIST.db);
+      try{ const rq=indexedDB.open('libroHist',1);
+        rq.onupgradeneeded=()=>{ const db=rq.result; if(!db.objectStoreNames.contains('m')) db.createObjectStore('m',{keyPath:['s','t']}); };
+        rq.onsuccess=()=>{ HIST.db=rq.result; res(HIST.db); };
+        rq.onerror=()=>res(null);
+      }catch(_){ res(null); }
+    });
+  }
+  function histCargar(sym){
+    HIST.sym=sym; HIST.rows=[];
+    histDB().then(db=>{
+      if(!db||HIST.sym!==sym) return;
+      try{
+        const lim=Date.now()-HIST_DIAS*864e5;
+        const tx=db.transaction('m','readwrite'), st=tx.objectStore('m');
+        const rq=st.getAll(IDBKeyRange.bound([sym,0],[sym,Infinity]));
+        rq.onsuccess=()=>{
+          if(HIST.sym!==sym) return;
+          const out=[];
+          for(const r of rq.result){ if(r.t<lim){ st.delete([sym,r.t]); continue; } out.push(r); }
+          const ya=new Set(out.map(o=>o.t)); for(const r of HIST.rows) if(!ya.has(r.t)) out.push(r);
+          out.sort((a,b)=>a.t-b.t); HIST.rows=out;
+          console.log('📖 Historia del libro cargada: '+out.length+' min guardados de '+sym);
+          requestDraw();
+        };
+      }catch(_){}
+    });
+  }
+  function histGuardarMinuto(min){
+    const bk=LIB.buckets.get(min); if(!bk||!bk.n||!LIB.binPx||!LIB.sym) return;
+    const sym=String(LIB.sym);
+    const lados=[[],[]]; for(const [k,v] of bk.m) lados[k&1].push([k,v/bk.n]);
+    const sel=[]; for(const a of lados){ a.sort((x,y)=>y[1]-x[1]); for(const e of a.slice(0,80)) sel.push(e); }
+    const pr=new Float32Array(sel.length), vv=new Float32Array(sel.length);
+    sel.forEach(([k,u],j)=>{ pr[j]=(k>>1)*LIB.binPx; vv[j]=(k&1)? -u : u; });   // + compra · − venta
+    const rec={s:sym, t:min, p:pr, v:vv};
+    if(HIST.sym===sym){
+      const i=HIST.rows.findIndex(r=>r.t===min); if(i>=0) HIST.rows[i]=rec; else HIST.rows.push(rec);
+      const lim=Date.now()-HIST_DIAS*864e5; while(HIST.rows.length && HIST.rows[0].t<lim) HIST.rows.shift();
+    }
+    histDB().then(db=>{ if(!db) return; try{ db.transaction('m','readwrite').objectStore('m').put(rec); }catch(_){} });
+  }
+  window.addEventListener('beforeunload', ()=>{ const u=LIB.orden[LIB.orden.length-1]; if(u) histGuardarMinuto(u); });
+  /* columna de la historia guardada para una vela (solo lo anterior a la sesión actual), en la rejilla actual */
+  /* [AÑADIDO v174] ¿qué niveles de una foto del libro son MUROS? (criterio Coinglass)
+     Un nivel es muro si tiene ≥3× la mediana de sus vecinos (±12 niveles del mismo lado).
+     Se calcula una vez por minuto y se guarda en caché. */
+  function murosDe(m, nDiv, topN){
+    const lados=[[],[]]; for(const [k,v] of m) lados[k&1].push([k>>1, v/nDiv, k]);
+    const out=new Set();
+    for(const arr of lados){
+      arr.sort((a,b)=>a[0]-b[0]);
+      const cand=[];
+      for(let j=0;j<arr.length;j++){
+        const vec=[]; for(let q=Math.max(0,j-12);q<=Math.min(arr.length-1,j+12);q++) if(q!==j) vec.push(arr[q][1]);
+        vec.sort((a,b)=>a-b); const med=vec.length? vec[vec.length>>1] : 0;
+        if(arr[j][1]>=3*med) cand.push(arr[j]);
+      }
+      // [FIX v175] como mucho topN muros por lado (los más grandes): en pares pequeños destacaban demasiados
+      cand.sort((a,b)=>b[1]-a[1]); for(const c of cand.slice(0, topN||6)) out.add(c[2]);
+    }
+    return out;
+  }
+  function histCol(ci){
+    const C=S.candles||[]; if(!C[ci]||!HIST.rows.length||!LIB.binPx) return null;
+    const tf=C.length>1? C[1].t-C[0].t : 60000, t0=C[ci].t, t1=t0+tf, desde=LIB.orden.length? LIB.orden[0] : Infinity;
+    const acc=new Map(); let n=0;
+    for(const r of HIST.rows){
+      if(r.t<t0) continue; if(r.t>=t1||r.t>=desde) break;
+      n++; for(let j=0;j<r.p.length;j++){ const k=Math.round(r.p[j]/LIB.binPx)*2+(r.v[j]<0?1:0); acc.set(k,(acc.get(k)||0)+Math.abs(r.v[j])); }
+    }
+    if(!n) return null;
+    for(const [k,v] of acc) acc.set(k,v/n);
+    return acc;
+  }
+
+  /* [AÑADIDO v182] 📖 Libro — 1) solo muros que DURAN: un muro cuenta si sigue ahí (mismo precio ±1 tramo)
+     al menos N minutos seguidos (por defecto 5). Los que aparecen y se quitan en 1–2 min (puntos sueltos,
+     muchas veces órdenes falsas) no se pintan.
+     2) Clic en un muro → queda marcado en amarillo de lado a lado con su etiqueta; otro clic lo quita. */
+  S.libroMin=5;
+  try{ const v=+localStorage.getItem('libroMin'); if(v>=1) S.libroMin=v; }catch(_){}
+  function setLibroMin(v){ S.libroMin=Math.max(1,+v||1); try{ localStorage.setItem('libroMin',String(S.libroMin)); }catch(_){}
+    document.querySelectorAll('.ml-libmin-sel').forEach(x=>x.value=String(S.libroMin)); LIB._perSig=""; requestDraw(); }
+  setTimeout(()=>document.querySelectorAll('.ml-libmin-sel').forEach(x=>x.value=String(S.libroMin)),1500);
+  function mwFila(r,bp){ if(r._mwBp!==bp){ const mm=new Map(); for(let j=0;j<r.p.length;j++){ const kk=Math.round(r.p[j]/bp)*2+(r.v[j]<0?1:0); mm.set(kk,(mm.get(kk)||0)+Math.abs(r.v[j])); } r._mw=murosDe(mm,1,6); r._mwM=mm; r._mwBp=bp; } return r._mw; }
+  // marca en cada minuto (._ok) los muros que forman parte de una racha de ≥ S.libroMin minutos seguidos
+  function libroPersist(bp){
+    const P=S.libroMin||1, ult=LIB.orden[LIB.orden.length-1];
+    const sig=symbol+"|"+P+"|"+bp+"|"+HIST.rows.length+"|"+ult+"|"+(LIB.buckets.get(ult)||{n:0}).n;
+    if(LIB._perSig===sig) return; LIB._perSig=sig;
+    const seq=[], desde=LIB.orden[0];
+    for(const r of HIST.rows){ if(r.t>=desde) break; seq.push({t:r.t, mw:mwFila(r,bp), o:r}); }
+    for(const mn of LIB.orden){ const bk=LIB.buckets.get(mn); if(!bk||!bk.n) continue;
+      if(bk._mwN!==bk.n){ bk._mw=murosDe(bk.m,bk.n,6); bk._mwN=bk.n; } seq.push({t:mn, mw:bk._mw, o:bk}); }
+    const n=seq.length, fw=new Array(n), bw=new Array(n);
+    const run=(i,j,arr)=>{ const m=new Map(), ant= (j>=0&&j<n&&Math.abs(seq[i].t-seq[j].t)<=60000)? arr[j] : null;
+      for(const k of seq[i].mw){ const pr= ant? Math.max(ant.get(k)||0, ant.get(k-2)||0, ant.get(k+2)||0) : 0; m.set(k,pr+1); } return m; };
+    for(let i=0;i<n;i++) fw[i]=run(i,i-1,fw);
+    for(let i=n-1;i>=0;i--) bw[i]=run(i,i+1,bw);
+    for(let i=0;i<n;i++){ const ok=new Set(); for(const k of seq[i].mw) if(fw[i].get(k)+bw[i].get(k)-1>=P) ok.add(k); seq[i].o._ok=ok; }
+    // [v187] TRAMOS CONTINUOS: cada muro se une minuto a minuto (mismo precio ±1 tramo, huecos de
+    // hasta 3 min) en UNA raya de principio a fin. Antes se pintaba un minuto por píxel y en 1h/4h
+    // salían rayitas cortadas (punteado) en vez de líneas limpias como en Coinglass.
+    // [v188] y si la página estuvo CERRADA (hueco sin grabación, hasta 24 h) y el muro sigue en el
+    // mismo precio al volver, se une a través del hueco (ese tramo se pinta más tenue).
+    const G=3*60000, act=new Map(), runs=[]; let prevT=null;
+    for(const it of seq){
+      const o=it.o, val=k=> o.m ? (o.m.get(k)||0)/o.n : (o._mwM? (o._mwM.get(k)||0) : 0);
+      const trasHueco= prevT!=null && it.t-prevT>G && it.t-prevT<=864e5;
+      for(const k of o._ok){
+        const v=val(k); let r=act.get(k)||act.get(k-2)||act.get(k+2);
+        if(r && (it.t-r.t1<=G || (trasHueco && r.t1===prevT))){
+          if(it.t-r.t1>G) (r.gaps||(r.gaps=[])).push([r.t1,it.t]);
+          if(r.t1!==it.t){ r.t1=it.t; r.n++; r.vs+=v; if(v>r.vm) r.vm=v; } act.delete(r.kl); }
+        else { r={k, t0:it.t, t1:it.t, n:1, vs:v, vm:v}; runs.push(r); }
+        r.kl=k; act.set(k,r);   // sigue al muro si se mueve un tramo
+      }
+      for(const [k,r] of act) if(it.t-r.t1>G) act.delete(k);
+      prevT=it.t;
+    }
+    LIB._runs=runs;
+  }
+  // muros marcados con clic (por par), guardados en el navegador
+  function libroSelLista(){ const sym=String(symbol).toUpperCase();
+    if(S._libSelSym!==sym){ S._libSelSym=sym; S.libroSel=[]; try{ S.libroSel=JSON.parse(localStorage.getItem('libroSel_'+sym)||'[]')||[]; }catch(_){} }
+    return S.libroSel; }
+  function libroSelGuardar(){ try{ localStorage.setItem('libroSel_'+String(symbol).toUpperCase(), JSON.stringify(S.libroSel||[])); }catch(_){} }
+
   function libroSnapshot(){
     const fb=window._fullBook;
     if(!fb || fb.bids.size<20 || fb.asks.size<20) return;
@@ -9654,12 +9803,14 @@ const MapaLiq = (function(){
     if(LIB.sym!==symbol || !LIB.binPx || px/LIB.binPx>4000 || px/LIB.binPx<400){
       LIB.sym=symbol; LIB.binPx=px*0.0005; LIB.buckets=new Map(); LIB.orden=[]; LIB.grid=null; LIB.gridSig="";
     }
+    if(HIST.sym!==String(symbol)) histCargar(String(symbol));   // [v171] historia guardada de este par
     const now=Date.now();
     if(now-LIB.lastSnap < 1500) return;
     LIB.lastSnap=now;
     const min=Math.floor(now/60000)*60000;
     let b=LIB.buckets.get(min);
     if(!b){
+      if(LIB.orden.length) histGuardarMinuto(LIB.orden[LIB.orden.length-1]);   // [v171] el minuto anterior ya terminó
       b={n:0, m:new Map()}; LIB.buckets.set(min,b); LIB.orden.push(min);
       while(LIB.orden.length>LIB.maxMin){ LIB.buckets.delete(LIB.orden.shift()); }
     }
@@ -10085,6 +10236,11 @@ const MapaLiq = (function(){
       const r=Math.round(a[1]+(b[1]-a[1])*f), g=Math.round(a[2]+(b[2]-a[2])*f), bl=Math.round(a[3]+(b[3]-a[3])*f);
       out.push(`rgba(${r},${g},${bl},${(0.35+0.65*t).toFixed(3)})`); }
     return out; })();
+  // [AÑADIDO v186] estilo del 🌡 Heatmap: "nitido" (rayas finas estilo Coinglass) o "bloques" (como antes)
+  S.estiloHeat='nitido'; try{ const v=localStorage.getItem('heatEstilo'); if(v==='bloques'||v==='nitido') S.estiloHeat=v; }catch(_){}
+  function setEstiloHeat(v){ S.estiloHeat= v==='bloques'?'bloques':'nitido'; try{ localStorage.setItem('heatEstilo',S.estiloHeat); }catch(_){}
+    document.querySelectorAll('.ml-estilo-sel').forEach(x=>x.value=S.estiloHeat); requestDraw(); }
+  setTimeout(()=>document.querySelectorAll('.ml-estilo-sel').forEach(x=>x.value=S.estiloHeat),1500);
   function colorLibro(t){ return _palLibro[Math.max(0,Math.min(63,Math.round(t*63)))]; }
   function heatColor(t){
     if(!_palette){ _palette=[];
@@ -10159,13 +10315,54 @@ const MapaLiq = (function(){
           const xIniCol = x - bw/2;
           const anchoCol = esUltima ? Math.min(bw*1.5, Math.max(bw, xTope - xIniCol)) : bw;
           const col=S.grid[i];
+          if(S.estiloHeat==='nitido'){
+            // [v186] NÍTIDO: en cada vela solo el CENTRO de cada zona (pico local en vertical), como
+            // una raya fina de 1–2 px con la paleta morado→amarillo. Las velas contiguas forman la línea.
+            const xa=Math.floor(xIniCol), xb=Math.ceil(xIniCol+anchoCol), g=(S.gamma||1);
+            for(let r=r0;r<=r1;r++){
+              if(S.rowMask && !S.rowMask[r]) continue;
+              const v=col[r]; if(v<=0) continue;
+              // [FIX v190] centro de la zona = pico en ±3 filas (antes ±1: una zona salía como 2–3 rayas paralelas)
+              let pico=true; for(let d=1;d<=3&&pico;d++){ if(v<(col[r-d]||0) || v<=(col[r+d]||0)) pico=false; }
+              if(!pico) continue;
+              // [FIX v190] corte más alto (30% → 50% con la barra hacia desvanecer): fuera las rayas débiles
+              const t=Math.min(1, v*inv); if(t<0.30+0.10*(g-1)) continue;
+              const gr= t>=0.75 ? 2 : 1;
+              cx.fillStyle=colorLibro(Math.pow(t,0.6+0.25*(g-1)));
+              cx.fillRect(xa, Math.round(rowY[r])-(gr>>1), Math.max(1,xb-xa), gr);
+            }
+            continue;
+          }
           for(let r=r0;r<=r1;r++){
             if(S.rowMask && !S.rowMask[r]) continue;   // [AÑADIDO v128] filtro de nitidez
             const v=col[r]; if(v<=0) continue;
+            if(S.topZonas && v*inv<0.22) continue;     // [v183] sin estelas tenues: solo donde la zona es fuerte
             const c=heatColor(Math.min(1, v*inv));   // gamma ya integrado en la paleta
             if(!c) continue;
             cx.fillStyle=c; cx.fillRect(xIniCol, rowY[r]-rowH/2, anchoCol, rowH);
           }
+        }
+        // [AÑADIDO v183] ZONAS PRINCIPALES: las 3 más fuertes llevan etiqueta junto al eje
+        //   (lado, precio, liquidez estimada, distancia y ✓ libro si coincide con muros reales)
+        if(S.topZonas && S.zonasTop && S.zonasTop.length){
+          const pAct=price||S.candles[N-1].c, usados=[];
+          cx.font="bold 10px Consolas"; cx.textBaseline="middle";
+          S.zonasTop.slice(0,3).forEach((z,n)=>{
+            const y=yOf(z.p); if(y==null||y<8||y>h-8) return;
+            if(usados.some(u=>Math.abs(u-y)<16)) return; usados.push(y);
+            const arriba=z.p>pAct, d=(z.p-pAct)/pAct*100;
+            const txt=`★${n+1} ${arriba?'Cortos':'Largos'} ${fmtP(z.p)} · ${usdF(z.v)} · ${d>=0?'+':''}${d.toFixed(1)}%${z.real?' · ✓ libro':''}`;
+            const tw=cx.measureText(txt).width, x0=xTope-tw-26;   // [FIX v193] más a la izquierda: el eje tapaba el final
+            const col= arriba? '255,140,170' : '120,255,190';
+            // [v193] línea de puntos fina desde la VELA ACTUAL hasta la etiqueta, al precio exacto de la zona
+            const xV=ts.timeToCoordinate(S.candles[N-1].t/1000), xIni=(xV!=null? Math.min(xV, x0-10) : x0-10);
+            cx.strokeStyle=`rgba(${col},0.7)`; cx.lineWidth=1; cx.setLineDash([2,3]);
+            cx.beginPath(); cx.moveTo(xIni,Math.round(y)+0.5); cx.lineTo(x0-4,Math.round(y)+0.5); cx.stroke(); cx.setLineDash([]);
+            cx.fillStyle='rgba(3,6,12,0.9)'; cx.fillRect(x0-4,y-8,tw+8,16);
+            cx.strokeStyle=`rgba(${col},0.9)`; cx.strokeRect(x0-4+0.5,y-8+0.5,tw+8,16);
+            cx.fillStyle=`rgba(${col},1)`; cx.fillText(txt,x0,y);
+          });
+          cx.textBaseline="alphabetic";
         }
         // [AÑADIDO v131] CONTADOR EN PANTALLA. Sin esto no hay forma de saber si el selector
         // de zonas está haciendo algo o no. Dice cuántas bandas se están pintando ahora mismo
@@ -10200,16 +10397,23 @@ const MapaLiq = (function(){
     //  · El libro de AHORA se prolonga en líneas horizontales hasta el eje (como el borde derecho de
     //    Coinglass): desde el primer segundo se ven los muros como líneas, no como una columna.
     //  · Escala lineal: lo débil queda negro, solo brillan los niveles fuertes.
-    if(S.on.libro && S.candles && S.candles.length>1 && LIB.orden.length && LIB.binPx>0){
+    // [v189] con el 🌡 Heatmap encendido (y 📖 Libro apagado) se pintan SOLO los muros de ahora:
+    //   rayas hasta el eje, etiquetas "Muro de compra/venta" y los marcados con clic. Sin historia.
+    if((S.on.libro||S.on.heatmap) && S.candles && S.candles.length>1 && LIB.orden.length && LIB.binPx>0){
+      const soloVivos=!S.on.libro;
       const C=S.candles, N=C.length, xTope=w-axisPad, bp=LIB.binPx;
       const tfSec=Math.round((C[1].t-C[0].t)/1000), t0=C[0].t/1000;
       // referencia (percentil 99.5 de todo lo grabado), recalculada solo cuando entra un minuto nuevo
       const _ult=LIB.orden[LIB.orden.length-1], _sig=symbol+"|"+_ult+"|"+(LIB.buckets.get(_ult)||{n:0}).n;
+      // [FIX v175] referencia de color = percentil 90 de los MUROS, no de todo el libro: así el
+      // amarillo queda para los muros más grandes y el resto sale morado/azul (antes casi todo amarillo)
       if(LIB._refSig!==_sig){ const all=[];
-        for(const mn of LIB.orden){ const bk=LIB.buckets.get(mn); if(!bk||!bk.n) continue; for(const v of bk.m.values()) all.push(v/bk.n); }
-        all.sort((x,y)=>x-y); LIB._ref= all.length ? (all[Math.floor(all.length*0.995)]||all[all.length-1]) : 1; LIB._refSig=_sig; }
-      const rango = 0.25 + ((S.gamma||2)-1)*0.375;   // deslizador: resaltar (25%) ↔ desvanecer (100%)
-      const tope = (LIB._ref||1)*rango;
+        for(const mn of LIB.orden){ const bk=LIB.buckets.get(mn); if(!bk||!bk.n) continue;
+          if(bk._mwN!==bk.n){ bk._mw=murosDe(bk.m,bk.n,6); bk._mwN=bk.n; }
+          for(const k of bk._mw) all.push((bk.m.get(k)||0)/bk.n); }
+        all.sort((x,y)=>x-y); LIB._ref= all.length ? (all[Math.floor(all.length*0.90)]||all[all.length-1]) : 1; LIB._refSig=_sig; }
+      const rango = 0.5 + ((S.gamma||2)-1)*0.5;   // deslizador: resaltar (50%) ↔ desvanecer (150%)
+      const tope = (LIB._ref||1)*rango; LIB._tope=tope;
       let paso=6; { const xa=ts.timeToCoordinate(C[N-1].t/1000), xb=ts.timeToCoordinate(C[N-2].t/1000); if(xa!=null&&xb!=null) paso=xa-xb; }
       const xDe=tSec=>{ const i=Math.floor((tSec-t0)/tfSec); if(i<0||i>=N) return null;
         const xc=ts.timeToCoordinate(C[i].t/1000); if(xc==null) return null;
@@ -10221,34 +10425,66 @@ const MapaLiq = (function(){
         if(ya==null||yb==null||yb<0||ya>h) return null;
         const alto=Math.max(1, Math.min(3, Math.round((yb-ya)*0.4)));
         return [Math.round((ya+yb)/2 - alto/2), alto]; };
+      libroPersist(bp);                                                    // [v182]
+      const dib=new Map();                                                  // [v182] muros pintados: clave -> {y,x0,x1,v}
+      const anota=(k,f,xa,xb,v)=>{ const y=f[0]+f[1]/2, o=dib.get(k); if(!o) dib.set(k,{y,x0:xa,x1:xb,v}); else { o.x0=Math.min(o.x0,xa); o.x1=Math.max(o.x1,xb); o.v=Math.max(o.v,v); } };
       cx.save(); cx.imageSmoothingEnabled=false;
-      // a) historia minuto a minuto
+      // a) [v187] cada muro como UNA raya continua desde que apareció hasta que se fue (o hasta ahora)
       let xFin=null;
-      for(const mn of LIB.orden){
-        const bk=LIB.buckets.get(mn); if(!bk||!bk.n) continue;
-        const x=xDe(mn/1000); if(x==null) continue;
-        const xa=Math.round(x), xb=Math.round(x+anchoMin); if(xb<0||xa>xTope) continue;
-        xFin = xFin==null ? xb : Math.max(xFin,xb);
-        for(const [k,v] of bk.m){
-          const t=(v/bk.n)/tope; if(t<0.05) continue;   // [v162] lo muy débil → nada; lo flojo → índigo tenue
-          const f=filas(k); if(!f) continue;
-          cx.fillStyle=colorLibro(Math.min(1,t)); cx.fillRect(xa, f[0], Math.max(1,Math.min(xb,xTope)-xa), f[1]);
-        }
+      { const u=LIB.orden[LIB.orden.length-1]; const x=xDe(u/1000); if(x!=null) xFin=Math.round(x+anchoMin); }
+      if(soloVivos){ const xc=ts.timeToCoordinate(C[N-1].t/1000); if(xc!=null) xFin=Math.round(xc+paso/2+2); }
+      if(!soloVivos) for(const r of (LIB._runs||[])){
+        const t=(r.vs/r.n)/tope; if(t<0.15) continue;
+        let xa=xDe(r.t0/1000), xb=xDe(r.t1/1000);
+        if(xa==null&&xb==null) continue;
+        if(xa==null) xa=0; if(xb==null) xb=xTope;
+        xa=Math.round(xa); xb=Math.round(xb+anchoMin);
+        if(xb<0||xa>xTope) continue; xb=Math.min(xb,xTope);
+        const f=filas(r.k); if(!f) continue;
+        cx.fillStyle=colorLibro(Math.min(1,t)); cx.fillRect(xa, f[0], Math.max(1,xb-xa), f[1]);
+        if(r.gaps){ cx.fillStyle='#000'; cx.globalAlpha=0.6;          // [v188] tramo sin grabación: más tenue
+          for(const [g0,g1] of r.gaps){ const ga=xDe(g0/1000), gb=xDe(g1/1000); if(ga==null||gb==null) continue;
+            const a2=Math.round(ga+anchoMin), b2=Math.round(gb); if(b2>a2) cx.fillRect(a2, f[0], b2-a2, f[1]); }
+          cx.globalAlpha=1; }
+        anota(r.k,f,xa,xb,r.vm);
       }
       // b) libro de AHORA prolongado en líneas hasta el eje (más tenue que la historia)
+      // [FIX v170] en el hueco solo se prolongan los MUROS, con el criterio de Coinglass: un nivel
+      // cuenta si tiene ≥4× la mediana de sus vecinos (±12 niveles del mismo lado). Cerca del precio
+      // el libro siempre está lleno; sin esto casi todo pasaba el filtro y salía un código de barras.
+      const esMuro=new Set();
+      if(LIB.live){
+        const lados=[[],[]]; for(const [k,v] of LIB.live) lados[k&1].push([k>>1,v,k]);
+        for(const arr of lados){
+          arr.sort((a,b)=>a[0]-b[0]);
+          for(let j=0;j<arr.length;j++){
+            const vec=[]; for(let q=Math.max(0,j-12);q<=Math.min(arr.length-1,j+12);q++) if(q!==j) vec.push(arr[q][1]);
+            vec.sort((a,b)=>a-b); const med=vec.length? vec[vec.length>>1] : 0;
+            if(arr[j][1]>=4*med && arr[j][1]>=tope*0.30) esMuro.add(arr[j][2]);
+          }
+        }
+        // [FIX v175] como mucho 4 por lado (los mayores)
+        const ord=[[],[]]; for(const k of esMuro) ord[k&1].push([k, LIB.live.get(k)||0]);
+        esMuro.clear(); for(const a of ord){ a.sort((x,y)=>y[1]-x[1]); for(const e of a.slice(0,4)) esMuro.add(e[0]); }
+        // [v182] en el hueco de la derecha, solo los muros que ya llevan ≥ N minutos
+        const ultBk=LIB.buckets.get(LIB.orden[LIB.orden.length-1]);
+        if((S.libroMin||1)>1 && ultBk && ultBk._ok){ for(const k of [...esMuro]) if(!ultBk._ok.has(k)&&!ultBk._ok.has(k-2)&&!ultBk._ok.has(k+2)) esMuro.delete(k); }
+      }
       if(LIB.live && xFin!=null && xFin<xTope-62){
-        cx.globalAlpha=0.55;
+        cx.globalAlpha= soloVivos? 0.9 : 0.55;
         for(const [k,v] of LIB.live){
-          const t=v/tope; if(t<0.05) continue;
+          if(!esMuro.has(k)) continue;
+          const t=v/tope;
           const f=filas(k); if(!f) continue;
           cx.fillStyle=colorLibro(Math.min(1,t)); cx.fillRect(xFin, f[0], xTope-62-xFin, f[1]);
+          anota(k,f,xFin,xTope-62,v);
         }
         cx.globalAlpha=1;
       }
       // [AÑADIDO v162] etiquetas "Muro de compra / venta" de los 2 mayores de cada lado (como Coinglass)
       if(LIB.live){
         const vis=[];
-        for(const [k,v] of LIB.live){ if(v<tope*0.6) continue; const f=filas(k); if(!f) continue; vis.push({k,v,y:f[0]}); }
+        for(const k of esMuro){ const v=LIB.live.get(k)||0; const f=filas(k); if(!f) continue; vis.push({k,v,y:f[0]}); }   // [v175] etiquetas = las líneas dibujadas
         const sel=[...vis.filter(o=>!(o.k&1)).sort((a,b)=>b.v-a.v).slice(0,2), ...vis.filter(o=>o.k&1).sort((a,b)=>b.v-a.v).slice(0,2)];
         cx.font="bold 11px Consolas"; cx.textBaseline="middle";
         const usados=[];
@@ -10261,6 +10497,26 @@ const MapaLiq = (function(){
           cx.lineWidth=1; cx.strokeStyle=`rgba(${col},0.95)`; cx.strokeRect(x0-5,o.y-9,tw+10,18);
           cx.fillStyle=`rgba(${col},1)`; cx.fillText(txt,x0,o.y);
         }
+        cx.textBaseline="alphabetic";
+      }
+      // d) [v182] muros MARCADOS con clic: banda amarilla de lado a lado + etiqueta (otro clic la quita)
+      S._libDib=dib; S._libBp=bp; S._libSelY=[];
+      for(const sm of libroSelLista()){
+        const kb=Math.round(sm.p/bp), k=kb*2+(sm.venta?1:0);
+        const yc=yOf(kb*bp), ya=yOf(kb*bp+bp/2), yb=yOf(kb*bp-bp/2); if(yc==null||ya==null||yb==null||yc<-10||yc>h+10) continue;
+        const hh=Math.max(8,Math.abs(yb-ya)), y0=yc-hh/2;
+        S._libSelY.push({y:yc, hh, sm});
+        cx.fillStyle='rgba(245,232,58,0.10)'; cx.fillRect(0,y0,xTope-62,hh);
+        cx.lineWidth=1.5; cx.strokeStyle='#f5e83a'; cx.strokeRect(0.75,y0,xTope-63.5,hh);
+        cx.setLineDash([4,3]); cx.lineWidth=1; cx.beginPath(); cx.moveTo(0,Math.round(yc)+0.5); cx.lineTo(xTope-62,Math.round(yc)+0.5); cx.stroke(); cx.setLineDash([]);
+        const vivo= LIB.live ? Math.max(LIB.live.get(k)||0, LIB.live.get(k+2)||0, LIB.live.get(k-2)||0) : 0;
+        const pAct=livePrice()||C[N-1].c, d=(kb*bp-pAct)/pAct*100;
+        const txt=(sm.venta?'Muro de venta ':'Muro de compra ')+(vivo? usdF(vivo) : 'retirado')+'  ·  '+fmtP(kb*bp)+'  ('+(d>=0?'+':'')+d.toFixed(2)+'%)  ✕';
+        cx.font="bold 11px Consolas"; cx.textBaseline="middle";
+        const tw=cx.measureText(txt).width, x0=xTope-62-tw-14;
+        cx.fillStyle='rgba(8,10,18,0.95)'; cx.fillRect(x0-5,yc-10,tw+10,20);
+        cx.lineWidth=1.5; cx.strokeStyle='#f5e83a'; cx.strokeRect(x0-5,yc-10,tw+10,20);
+        cx.fillStyle= sm.venta? '#ff8a5c' : '#4cd98a'; cx.fillText(txt,x0,yc);
         cx.textBaseline="alphabetic";
       }
       // c) barras del libro de ahora pegadas al eje (compras verde, ventas rojo), máx. 60px
@@ -10298,7 +10554,7 @@ const MapaLiq = (function(){
         for(const g of grupos.values()){
           const x=ts.timeToCoordinate(C[g.i].t/1000), y=yOf(g.pw/g.usd);
           if(x==null||y==null||x<0||x>xTope||y<-10||y>h+10) continue;
-          vis.push({x,y,usd:g.usd,lado:g.lado});
+          vis.push({x,y,usd:g.usd,lado:g.lado,i:g.i});
         }
         vis.sort((a,b)=>b.usd-a.usd);
         // [FIX v166] el tamaño se compara con el MAYOR grupo de las últimas 48h (no solo con lo que
@@ -10306,31 +10562,70 @@ const MapaLiq = (function(){
         // visible. Mínimo absoluto $50K y ≥15% del mayor para dibujarse.
         let maxAll=0; for(const g of grupos.values()) if(g.usd>maxAll) maxAll=g.usd;
         const maxU=Math.max(maxAll, vis.length?vis[0].usd:0, 1);
-        const pint=vis.filter(v=>v.usd>=Math.max(maxU*0.15, 50000)).slice(0,25);
+        const _piso=pisoLiq();   // [v173] piso adaptado al par (antes $50K fijos)
+        const pint=vis.filter(v=>v.usd>=Math.max(maxU*0.15, _piso)).slice(0,25);
         const fmtL=v=>v>=1e6?"$"+(v/1e6).toFixed(1)+"M":"$"+Math.round(v/1e3)+"K";
         // [FIX v152] DISEÑO: los círculos tenían el mismo rojo/verde que las velas y se perdían encima.
         // Ahora: halo negro que los recorta de la vela, tonos más claros que los de las velas,
         // y el importe en un chip oscuro (como los muros) colocado FUERA del cuerpo de la vela.
         const _xa=ts.timeToCoordinate(C[N-1].t/1000), _xb=ts.timeToCoordinate(C[N-2].t/1000);
         const anchoVela=(_xa!=null&&_xb!=null)? Math.abs(_xa-_xb) : 8;
+        // [v181] 1) Círculos de velas YA CERRADAS → van al FONDO: se pintan aparte y se les "recorta"
+        //           la forma de las velas, así la vela queda delante. El de la vela en curso sigue delante.
+        //        2) Etiqueta del importe: a la derecha si allí no tapa ninguna vela; si tapa, a la izquierda;
+        //           y nunca encima de otra etiqueta.
+        const geo=j=>{ const k=C[j]; if(!k) return null; const x=ts.timeToCoordinate(k.t/1000); if(x==null) return null;
+          return {x, yH:yOf(k.h), yL:yOf(k.l), yT:yOf(Math.max(k.o,k.c)), yB:yOf(Math.min(k.o,k.c))}; };
+        const bwV=Math.max(1, anchoVela*0.8);
+        if(!S._liqCv){ S._liqCv=document.createElement('canvas'); S._liqCx=S._liqCv.getContext('2d'); }
+        const ocv=S._liqCv, ocx=S._liqCx, dprL=cv.width/w;
+        if(ocv.width!==cv.width||ocv.height!==cv.height){ ocv.width=cv.width; ocv.height=cv.height; }
+        ocx.setTransform(1,0,0,1,0,0); ocx.clearRect(0,0,ocv.width,ocv.height); ocx.setTransform(dprL,0,0,dprL,0,0);
+        const aro=(g,v,rad,col)=>{
+          g.beginPath(); g.arc(v.x,v.y,rad,0,Math.PI*2);
+          g.lineWidth=3; g.strokeStyle='rgba(0,0,0,0.55)'; g.stroke();
+          g.lineWidth=1.6; g.strokeStyle=`rgba(${col},1)`; g.stroke();
+          g.beginPath(); g.arc(v.x,v.y,1.4,0,Math.PI*2); g.fillStyle=`rgba(${col},1)`; g.fill();
+        };
+        const recortar=new Set();
+        pint.forEach(v=>{
+          const rad=3.5+8.5*Math.sqrt(v.usd/maxU), col=v.lado==='long' ? '255,140,170' : '120,255,190';
+          v.rad=rad; v.col=col;
+          if(v.i<N-1){ aro(ocx,v,rad,col); const n=Math.ceil((rad+bwV)/Math.max(1,anchoVela))+1; for(let j=v.i-n;j<=v.i+n;j++) if(j>=0&&j<N) recortar.add(j); }
+        });
+        if(recortar.size){
+          ocx.globalCompositeOperation='destination-out'; ocx.fillStyle='#000';
+          for(const j of recortar){ const q=geo(j); if(!q) continue;
+            ocx.fillRect(Math.round(q.x)-1, q.yH, 2, Math.max(1,q.yL-q.yH));                         // mecha
+            ocx.fillRect(q.x-bwV/2-0.5, q.yT-0.5, bwV+1, Math.max(1,q.yB-q.yT)+1); }               // cuerpo
+          ocx.globalCompositeOperation='source-over';
+          cx.save(); cx.setTransform(1,0,0,1,0,0); cx.drawImage(ocv,0,0); cx.restore();
+        }
         cx.save();
+        pint.forEach(v=>{ if(v.i>=N-1) aro(cx,v,v.rad,v.col); });                                   // vela en curso: delante
+        const puestas=[];
+        // [FIX v183] se mide con el ancho COMPLETO de la vela (+2px de margen) y también se evitan los círculos
+        const tapaVela=(x0,x1,y0,y1,iC)=>{ let n=0; for(let j=iC-40;j<=iC+40;j++){ const q=geo(j); if(!q) continue;
+            if(q.x+anchoVela/2+2<x0||q.x-anchoVela/2-2>x1) continue; if(q.yL+2<y0||q.yH-2>y1) continue; n++; }
+          for(const c of pint){ if(c.x+c.rad<x0||c.x-c.rad>x1||c.y+c.rad<y0||c.y-c.rad>y1) continue; n+=0.5; }
+          return n; };
+        const choca=(x0,x1,y0,y1)=>puestas.some(r=>!(x1<r[0]||x0>r[1]||y1<r[2]||y0>r[3]));
         pint.forEach((v,idx)=>{
-          const rad=3.5+8.5*Math.sqrt(v.usd/maxU);
-          const col=v.lado==='long' ? '255,140,170' : '120,255,190';   // rosa claro / menta (≠ velas)
-          // [FIX v166] aro HUECO: sin relleno, la vela se ve a través. Halo fino para separarlo.
-          cx.beginPath(); cx.arc(v.x,v.y,rad,0,Math.PI*2);
-          cx.lineWidth=3; cx.strokeStyle='rgba(0,0,0,0.55)'; cx.stroke();
-          cx.lineWidth=1.6; cx.strokeStyle=`rgba(${col},1)`; cx.stroke();
-          // 3) punto central: marca el precio exacto
-          cx.beginPath(); cx.arc(v.x,v.y,1.4,0,Math.PI*2); cx.fillStyle=`rgba(${col},1)`; cx.fill();
-          if(idx<3 && v.usd>=Math.max(maxU*0.30, 250000)){   // [v166] importe solo en los grandes de verdad
+          const rad=v.rad, col=v.col;
+          if(idx<3 && v.usd>=Math.max(maxU*0.30, _piso*5)){   // [v166/v173] importe solo en los grandes de verdad
             const txt=(v.lado==='long'?'▼ ':'▲ ')+fmtL(v.usd);
             cx.font="bold 11px Consolas"; cx.textBaseline="middle";
-            const tw=cx.measureText(txt).width;
-            const x0=v.x+Math.max(rad, anchoVela/2)+7;
-            cx.fillStyle='rgba(3,6,12,0.92)'; cx.fillRect(x0-4, v.y-9, tw+8, 18);
-            cx.lineWidth=1; cx.strokeStyle=`rgba(${col},0.9)`; cx.strokeRect(x0-4, v.y-9, tw+8, 18);
-            cx.fillStyle=`rgba(${col},1)`; cx.fillText(txt, x0, v.y);
+            const tw=cx.measureText(txt).width, sep=Math.max(rad, anchoVela/2)+7;
+            const opc=[]; for(const dy of [0,20,-20,40,-40,60,-60,80,-80,110,-110]) for(const lado of [1,-1]) for(const ex of [0,16,36]){
+              const x0= lado>0? v.x+sep+ex : v.x-sep-ex-tw, y=v.y+dy, r=[x0-4, x0+tw+4, y-9, y+9];
+              if(r[1]>xTope||r[0]<2||r[2]<2||r[3]>h-2) continue;
+              opc.push({x0,y,r,coste: tapaVela(r[0],r[1],r[2],r[3],v.i)*1000 + (choca(...r)?500:0) + Math.abs(dy)/20 + ex/20 + (lado<0?0.3:0)}); }
+            if(!opc.length) return;
+            opc.sort((a,b)=>a.coste-b.coste); const o=opc[0]; puestas.push(o.r);
+            if(o.y!==v.y){ cx.beginPath(); cx.moveTo(v.x,v.y); cx.lineTo(o.r[0]<v.x? o.r[1] : o.r[0], o.y); cx.lineWidth=1; cx.strokeStyle=`rgba(${col},0.5)`; cx.stroke(); }
+            cx.fillStyle='rgba(3,6,12,0.92)'; cx.fillRect(o.x0-4, o.y-9, tw+8, 18);
+            cx.lineWidth=1; cx.strokeStyle=`rgba(${col},0.9)`; cx.strokeRect(o.x0-4, o.y-9, tw+8, 18);
+            cx.fillStyle=`rgba(${col},1)`; cx.fillText(txt, o.x0, o.y);
             cx.textBaseline="alphabetic";
           }
         });
@@ -10370,6 +10665,56 @@ const MapaLiq = (function(){
         cx.textBaseline="alphabetic";
       }
       cx.restore();
+    }
+    // 1-sexto) [AÑADIDO v173] CHoCH DE ESTRUCTURA (etiqueta sobria; si en esa vela hay ✓ CHoCH de barrido, manda ese)
+    if((S.on.heatmap||S.on.libro) && S.estruc && S.estruc.length && S.candles){
+      const C=S.candles, conBarr=new Set((S.barridos||[]).filter(b=>b.estado==="ok"||b.estado==="ruido").map(b=>b.iFin+"|"+b.dir));
+      cx.save(); cx.textBaseline="middle"; cx.font="bold 10px Consolas";
+      for(const g of S.estruc){
+        if(conBarr.has(g.i+"|"+g.dir)) continue;
+        const kc=C[g.i], kp=C[g.iPiv]; if(!kc||!kp) continue;
+        const xc=ts.timeToCoordinate(kc.t/1000), xp=ts.timeToCoordinate(kp.t/1000), yN=yOf(g.nivel);
+        if(xc==null||yN==null||xc>w-axisPad) continue;
+        const up=g.dir==="alcista", col=up?'150,220,190':'230,160,180';
+        if(xp!=null){ cx.setLineDash([2,4]); cx.lineWidth=1; cx.strokeStyle=`rgba(${col},0.6)`;
+          cx.beginPath(); cx.moveTo(xp,yN); cx.lineTo(xc,yN); cx.stroke(); cx.setLineDash([]); }
+        const t="CHoCH "+(up?"▲":"▼"), tw=cx.measureText(t).width;
+        const x0=Math.max(4, Math.min(xc-tw/2, w-axisPad-tw-8)), yc= up? yN-10 : yN+10;
+        cx.fillStyle='rgba(3,6,12,0.85)'; cx.fillRect(x0-3,yc-7,tw+6,14);
+        cx.fillStyle=`rgba(${col},0.95)`; cx.fillText(t,x0,yc);
+      }
+      cx.textBaseline="alphabetic"; cx.restore();
+    }
+    // 1-quinto) [AÑADIDO v172] BARRIDO → ✓ CHoCH / ✖ anulado / barrido… (va con 🌡 Heatmap o 📖 Libro)
+    if((S.on.heatmap||S.on.libro) && S.barridos && S.barridos.length && S.candles){
+      const C=S.candles; cx.save(); cx.textBaseline="middle";
+      for(const g of S.barridos){
+        const kw=C[g.w]; if(!kw) continue;
+        const up=g.dir==="alcista", col=up?'120,255,190':'255,140,170';
+        const xw=ts.timeToCoordinate(kw.t/1000), yT=yOf(up? kw.l : kw.h);
+        if(xw==null||yT==null||xw>w-axisPad) continue;
+        const yE= up? yT+11 : yT-11;
+        if(g.estado==="pend"){
+          cx.font="9px Consolas"; cx.fillStyle='rgba(150,160,180,0.85)';
+          const t="barrido…", tw=cx.measureText(t).width; cx.fillText(t, xw-tw/2, yE);
+        } else if(g.estado==="fallo"){
+          cx.font="bold 10px Consolas"; cx.fillStyle='rgba(150,155,165,0.9)';
+          const t="✖", tw=cx.measureText(t).width; cx.fillText(t, xw-tw/2, yE);
+        } else {
+          const kc=C[g.iFin], kp=C[g.iPiv]; if(!kc||!kp) continue;
+          const xc=ts.timeToCoordinate(kc.t/1000), xp=ts.timeToCoordinate(kp.t/1000), yN=yOf(g.nivel);
+          if(xc==null||yN==null) continue;
+          if(xp!=null){ cx.setLineDash([3,3]); cx.lineWidth=1; cx.strokeStyle=`rgba(${col},0.75)`;
+            cx.beginPath(); cx.moveTo(xp,yN); cx.lineTo(xc,yN); cx.stroke(); cx.setLineDash([]); }
+          const t=(g.estado==="ok"?"✓ CHoCH ":"CHoCH ? ")+(up?"▲":"▼");
+          cx.font="bold 10px Consolas"; const tw=cx.measureText(t).width;
+          const x0=Math.max(4, Math.min(xc-tw/2, w-axisPad-tw-8)), yc= up? yN-11 : yN+11;
+          cx.fillStyle='rgba(3,6,12,0.9)'; cx.fillRect(x0-4,yc-7,tw+8,14);
+          cx.lineWidth=1; cx.strokeStyle= g.estado==="ok"?`rgba(${col},0.95)`:'rgba(150,155,165,0.8)'; cx.strokeRect(x0-4,yc-7,tw+8,14);
+          cx.fillStyle= g.estado==="ok"?`rgba(${col},1)`:'rgba(170,175,185,1)'; cx.fillText(t,x0,yc);
+        }
+      }
+      cx.textBaseline="alphabetic"; cx.restore();
     }
     // 1-bis) [AÑADIDO v127] LIBRO REAL: heatmap de la liquidez grabada del order book
     // [ELIMINADO v131] La capa 🧊 del libro (perfil azul/violeta) ocupaba un tercio de la
@@ -10602,7 +10947,97 @@ const MapaLiq = (function(){
     compute();         // modelo + zonas + react + heat
     updateTargets();
     calcAgotamiento(); // [AÑADIDO v153] señal de giro: cascada de liquidaciones + silencio + CHoCH
+    calcBarridos();    // [AÑADIDO v172] barrido con liquidaciones en la mecha → confirmación CHoCH o anulación
+    calcEstructura();  // [AÑADIDO v173] CHoCH de estructura, haya liquidaciones o no
     requestDraw();
+  }
+
+  /* [AÑADIDO v173] CHoCH DE ESTRUCTURA (sin depender de liquidaciones), con velas CERRADAS.
+     Pivotes de swing de 2 velas a cada lado (un pivote solo se conoce 2 velas después). Se recorre el
+     gráfico guardando el último máximo y mínimo de swing y la tendencia:
+       cierre por encima del último máximo  → si la tendencia era bajista: CHoCH ▲ · si no: BOS ▲
+       cierre por debajo del último mínimo  → si la tendencia era alcista: CHoCH ▼ · si no: BOS ▼
+     Solo se dibujan los CHoCH (los BOS no, para no cargar el gráfico). */
+  function calcEstructura(){
+    S.estruc=[];
+    const C=S.candles||[], N=C.length; if(N<10) return;
+    const pivH=j=>C[j].h>=C[j-1].h&&C[j].h>=C[j-2].h&&C[j].h>C[j+1].h&&C[j].h>C[j+2].h;
+    const pivL=j=>C[j].l<=C[j-1].l&&C[j].l<=C[j-2].l&&C[j].l<C[j+1].l&&C[j].l<C[j+2].l;
+    let tend=null, ph=null, pl=null;
+    for(let i=4;i<N-1;i++){                       // N-1 = vela en curso: no se evalúa
+      const j=i-2;                                 // pivote que se confirma con la vela i
+      if(j>=2){ if(pivH(j)) ph={j,p:C[j].h,roto:false}; if(pivL(j)) pl={j,p:C[j].l,roto:false}; }
+      const c=C[i].c;
+      if(ph && !ph.roto && c>ph.p){ ph.roto=true; if(tend==="bajista") S.estruc.push({i,dir:"alcista",iPiv:ph.j,nivel:ph.p}); tend="alcista"; }
+      else if(pl && !pl.roto && c<pl.p){ pl.roto=true; if(tend==="alcista") S.estruc.push({i,dir:"bajista",iPiv:pl.j,nivel:pl.p}); tend="bajista"; }
+    }
+    S.estruc=S.estruc.slice(-6);
+  }
+
+  /* [AÑADIDO v173] mínimo de liquidación ADAPTADO AL PAR: 0.05% del volumen mediano por vela,
+     entre $1K y $50K. En BTC sigue siendo $50K; en un par pequeño baja a lo que es grande para él. */
+  function pisoLiq(){
+    const C=S.candles||[]; const qs=[]; for(const k of C) if(k.q>0) qs.push(k.q);
+    if(!qs.length) return 50000; qs.sort((a,b)=>a-b);
+    return Math.min(50000, Math.max(1000, qs[qs.length>>1]*0.0005));
+  }
+
+  /* [AÑADIDO v172] BARRIDO DE LIQUIDEZ CON CONFIRMACIÓN (velas CERRADAS, no repinta)
+     Detección (vela W):  mecha ≥40% de la vela · liquidaciones del lado barrido DENTRO de la mecha
+                          (≥15% del mayor grupo de 48h y ≥$50K, como los círculos) · la mecha perfora
+                          el mínimo (o máximo) de las 10 velas anteriores.
+     Después:  ✖ anulado  → una vela cierra más allá de la punta de la mecha
+               ✓ CHoCH    → una vela cierra más allá del último pivote de swing previo a la mecha,
+                            sin anulación antes y en SILENCIO (ninguna vela con ≥50% de esas liquidaciones)
+               CHoCH ?    → rompe el nivel pero sin silencio (siguieron liquidando)
+               barrido…   → esperando (máx. 30 velas) */
+  function calcBarridos(){
+    S.barridos=[];
+    const C=S.candles||[], N=C.length;
+    const L=((window._liqStore||{})[String(symbol).toUpperCase()])||[];
+    if(N<15||!L.length) return;
+    const idxDe=t=>{ if(t<C[0].t) return -1; let a=0,b=N-1; while(a<b){ const m=(a+b+1)>>1; if(C[m].t<=t) a=m; else b=m-1; } return a; };
+    const porVela=new Map(), sumas=new Map(); let maxAll=0;
+    for(const q of L){ const i=idxDe(q.t); if(i<0) continue;
+      let l=porVela.get(i); if(!l){ l=[]; porVela.set(i,l); } l.push(q);
+      const kk=i+"|"+q.lado; sumas.set(kk,(sumas.get(kk)||0)+q.usd); }
+    for(const v of sumas.values()) if(v>maxAll) maxAll=v;
+    const umbral=Math.max(maxAll*0.15, pisoLiq());   // [v173] piso adaptado al par
+    const pivH=j=>j>=2&&j+2<N&&C[j].h>=C[j-1].h&&C[j].h>=C[j-2].h&&C[j].h>C[j+1].h&&C[j].h>C[j+2].h;
+    const pivL=j=>j>=2&&j+2<N&&C[j].l<=C[j-1].l&&C[j].l<=C[j-2].l&&C[j].l<C[j+1].l&&C[j].l<C[j+2].l;
+    for(let w=12; w<N-1; w++){
+      const k=C[w], lista=porVela.get(w); if(!lista) continue;
+      for(const dir of ["alcista","bajista"]){
+        const up=dir==="alcista", lado=up?"long":"short";
+        const cuerpo= up? Math.min(k.o,k.c) : Math.max(k.o,k.c);
+        const mecha= up? cuerpo-k.l : k.h-cuerpo, rango=(k.h-k.l)||1;
+        if(mecha < rango*0.4) continue;
+        let usd=0; for(const q of lista) if(q.lado===lado && (up? q.p<=cuerpo : q.p>=cuerpo)) usd+=q.usd;
+        if(usd<umbral) continue;
+        let lo=Infinity, hi=-Infinity; for(let j=w-10;j<w;j++){ lo=Math.min(lo,C[j].l); hi=Math.max(hi,C[j].h); }
+        if(up? !(k.l<lo) : !(k.h>hi)) continue;
+        let piv=-1; for(let j=w-2;j>=Math.max(2,w-25);j--) if(up? pivH(j) : pivL(j)){ piv=j; break; }
+        if(piv<0) continue;
+        const nivel= up? C[piv].h : C[piv].l;
+        let estado="pend", iFin=-1;
+        for(let j=w+1;j<N-1 && j-w<=30;j++){
+          const cj=C[j];
+          if(up? cj.c<k.l : cj.c>k.h){ estado="fallo"; iFin=j; break; }
+          if(up? cj.c>nivel : cj.c<nivel){
+            let calla=true; for(let q=w+1;q<=j;q++) if((sumas.get(q+"|"+lado)||0)>=usd*0.5){ calla=false; break; }
+            estado= calla? "ok" : "ruido"; iFin=j; break;
+          }
+        }
+        S.barridos.push({w, dir, usd, iPiv:piv, nivel, estado, iFin});
+      }
+    }
+    S.barridos=S.barridos.slice(-8);
+    const u=S.barridos.filter(b=>b.iFin===N-2 && (b.estado==="ok"||b.estado==="fallo")).pop();
+    if(u){ const key=symbol+"|"+C[u.iFin].t+"|"+u.dir+"|"+u.estado;
+      if(S._barrAvisado!==key){ S._barrAvisado=key;
+        console.log(u.estado==="ok"
+          ? `%c✓ CHoCH ${u.dir==="alcista"?"▲":"▼"} tras barrido con ${usdF(u.usd)} de liquidaciones en la mecha · nivel ${fmtP(u.nivel)}`
+          : `%c✖ Barrido anulado: una vela cerró más allá de la mecha`, u.estado==="ok"?"color:#7dffbf;font-weight:bold":"color:#8a93a3"); } }
   }
 
   /* [AÑADIDO v153] ✓ GIRO CONFIRMADO — solo con velas CERRADAS (no repinta):
@@ -10661,7 +11096,7 @@ const MapaLiq = (function(){
         const a=Math.max(ini, c-W), b=c-SIL;
         let P=-1, mx=0, sum=0;
         for(let i=a;i<b;i++){ sum+=Lq[i]; if(Lq[i]>mx){ mx=Lq[i]; P=i; } }
-        if(P<0 || mx<50000 || mx<3*sum/Math.max(1,b-a)) continue;
+        if(P<0 || mx<pisoLiq() || mx<3*sum/Math.max(1,b-a)) continue;   // [v173] piso adaptado al par
         if(mx < 0.35*(dir==="alcista"?maxL:maxS)) continue;   // [FIX v155] cascada importante
         let calla=true; for(let i=b;i<=c;i++) if(Lq[i]>0.15*mx){ calla=false; break; }
         if(!calla) continue;
@@ -11038,27 +11473,18 @@ const MapaLiq = (function(){
       const mk=(k,txt,title)=>`<button class="liquidity-btn${S.on[k]?' ml-on':''}" data-ml="${k}" onclick="MapaLiq.toggle('${k}',this)" title="${title}">${txt}</button>`;
       // [FIX v154] la barra del maximizado iba solo con iconos y le faltaban 📐 Líneas, 🎯 SMC y
       // 📊 Precisión. Ahora es la MISMA barra que la normal: mismos nombres, mismos botones y orden.
+      // [v191] barra de pantalla completa: capas + análisis + ⚙ Ajustes (los selectores van en el panel)
       bar.innerHTML =
         mk("heatmap","🌡 Heatmap","Heatmap modelo")+mk("libro","📖 Libro","Libro real estilo Coinglass")+mk("heat","🔥 Calor","Zonas de calor")+mk("react","⟲ Reacción","Reacción")
         +mk("book","🐋 Muros","Muros")+mk("vp","📊 VRVP","VRVP")+mk("macro","🟣 Macro","Macro")+mk("targets","🎯 Objetivos","Objetivos")
         +`<button class="liquidity-btn${window._instLinesHidden?'':' ml-on'}" data-ml-inst onclick="toggleInstLines()" title="Zonas institucionales reales">📍 Z.Reales</button>`
-        +`<select class="liquidity-btn ml-conf-sel" onchange="MapaLiq.setConf(this.value)" title="Confluencia">`
-        +`<option value="3">Confl: las 3</option><option value="2">Confl: 2 de 3</option><option value="poc">Confl: +POC</option><option value="macro">Confl: +Macro</option><option value="off">Confl: off</option></select>`
-        +`<select class="liquidity-btn ml-usd-sel" onchange="MapaLiq.setMinUsd(this.value)" title="Muro mínimo">`
-        +`<option value="0">Muro: AUTO 🎯</option>`
-        +`<option value="100000">Muro ≥ $100K</option><option value="250000">Muro ≥ $250K</option><option value="500000">Muro ≥ $500K</option>`
-        +`<option value="1000000">Muro ≥ $1M</option><option value="2000000">Muro ≥ $2M</option><option value="5000000">Muro ≥ $5M</option>`
-        +`<option value="10000000">Muro ≥ $10M</option><option value="15000000">Muro ≥ $15M</option>`
-        +`<option value="20000000">Muro ≥ $20M</option><option value="25000000">Muro ≥ $25M</option><option value="50000000">Muro ≥ $50M</option></select>`
+        +`<span style="width:1px;height:18px;background:#2a3a54;margin:0 4px;"></span>`
         +`<button class="liquidity-btn" onclick="SMCIntra.alternar()" title="Pinta/quita los niveles SMC en el gráfico">📐 Líneas</button>`
         +`<button class="liquidity-btn" onclick="SMCIntra.ver()" title="Objetivos intradía por acción del precio">🎯 SMC</button>`
         +`<button class="liquidity-btn" onclick="MapaLiq.verPrecision()" title="Mide si los muros aciertan: rebote vs ruptura">📊 Precisión</button>`
-        +`<select class="liquidity-btn ml-nit-sel" onchange="MapaLiq.setNitidez(this.value)" title="Zonas del heatmap">`
-        +`<option value="3">Zonas: 3</option><option value="5">Zonas: 5</option><option value="8">Zonas: 8</option>`
-        +`<option value="12">Zonas: 12</option><option value="20">Zonas: 20</option><option value="0">Zonas: todas</option></select>`
-        +`<span style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap;"><span style="font-size:10px;color:#888;">resaltar</span>`
-        +`<input type="range" class="ml-gamma-sl" min="1" max="3" step="0.1" value="${S.gamma}" style="width:80px;accent-color:#37c0ff;cursor:pointer;" oninput="MapaLiq.setGamma(this.value)" title="Desvanecer heatmap">`
-        +`<span style="font-size:10px;color:#888;">desvanecer</span></span>`;
+        +`<button class="liquidity-btn" onclick="MapaLiq.abrirMapaLibro()" title="Mapa de calor del libro a pantalla completa">🗺 Mapa libro</button>`
+        +`<span style="width:1px;height:18px;background:#2a3a54;margin:0 4px;"></span>`
+        +`<button class="liquidity-btn mlx-aj" onclick="mlxAjustes(this,event)" title="Ajustes">⚙ Ajustes ▴</button>`;
       cont.appendChild(bar);
       const c2=bar.querySelector(".ml-conf-sel"); if(c2) c2.value=S.confMode;
       const u2=bar.querySelector(".ml-usd-sel"); if(u2) u2.value=String(S.bookMinUsd);
@@ -11136,10 +11562,11 @@ const MapaLiq = (function(){
       if(tC!=null){ if(typeof tC!=="number") return false; const tm=tC*1000;
         let a=0,b=N-1; while(a<b){ const m=(a+b+1)>>1; if(C[m].t<=tm) a=m; else b=m-1; } i=a; }
       if(x > cvr.width-64-62){ tip.style.display="none"; return true; }   // [v168] zona de las barras del eje
-      if(!G.cols[i]){ tip.style.display="none"; return true; }   // [FIX v167] sin libro → nada
+      const _hc=new Map(), colDe=ci=>{ if(G.cols[ci]) return G.cols[ci]; if(!_hc.has(ci)) _hc.set(ci,histCol(ci)); return _hc.get(ci); };   // [v171] + historia guardada
+      if(!colDe(i)){ tip.style.display="none"; return true; }   // [FIX v167] sin libro → nada
       const bp=LIB.binPx, price=livePrice()||p; let b0=Math.round(p/bp);
-      const rango=0.25+((S.gamma||2)-1)*0.375, tope=(LIB._ref||1)*rango;
-      const celda=(ci,b)=>{ const col=G.cols[ci]; if(!col) return null; return (col.get(b*2)||0)+(col.get(b*2+1)||0); };
+      const tope=LIB._tope||(LIB._ref||1);   // [v175] mismo tope que el dibujo
+      const celda=(ci,b)=>{ const col=colDe(ci); if(!col) return null; return (col.get(b*2)||0)+(col.get(b*2+1)||0); };
       // [FIX v167] solo ENCIMA de una línea amarilla (±1 nivel). Fuera de ella no sale nada.
       let bY=null; for(const bb of [b0, b0+1, b0-1]) if((celda(i,bb)||0)>=tope*0.75){ bY=bb; break; }   // [v168] amarillo real de la paleta
       if(bY==null){ tip.style.display="none"; return true; }
@@ -11155,7 +11582,7 @@ const MapaLiq = (function(){
       html+=`<table style="border-collapse:separate;border-spacing:3px;font-size:11px;"><tr>`;
       for(const ci of colsIdx){ const d=new Date(C[ci].t); html+=`<th style="color:${ci===i?'#fff':'#7d8ca5'};font-weight:${ci===i?700:400};padding:0 6px;">${z(d.getHours())}:${z(d.getMinutes())}</th>`; }
       html+=`<th></th></tr>`;
-      let sumC=0,sumV=0; const colI=G.cols[i];
+      let sumC=0,sumV=0; const colI=colDe(i);
       for(let b=b0+3;b>=b0-3;b--){
         html+='<tr>';
         for(const ci of colsIdx){
@@ -11246,6 +11673,23 @@ const MapaLiq = (function(){
       html+=`<div style="display:flex;justify-content:space-between;gap:24px;padding:4px 0 2px;border-top:1px solid #223349;margin-top:6px;"><span style="color:#9aa8bd;">±3 filas en esta vela</span><b>${fK(suma)}</b></div>`;
       return html;
     }
+    // [AÑADIDO v182] clic en un muro del 📖 Libro → se marca en amarillo; clic en uno marcado → se quita
+    let _libDown=null;
+    cont.addEventListener("mousedown", e=>{ _libDown={x:e.clientX,y:e.clientY}; });
+    cont.addEventListener("mouseup", e=>{
+      const d=_libDown; _libDown=null;
+      if(!d||!(S.on.libro||S.on.heatmap)||Math.hypot(e.clientX-d.x,e.clientY-d.y)>4) return;   // fue un arrastre, no un clic · [v189] también con 🌡 Heatmap
+      const cvr=cv.getBoundingClientRect(), x=e.clientX-cvr.left, y=e.clientY-cvr.top;
+      if(x<0||y<0||x>cvr.width-64||y>cvr.height-24) return;
+      const lista=libroSelLista();
+      const yaSel=(S._libSelY||[]).find(o=>Math.abs(o.y-y)<=Math.max(6,o.hh/2));
+      if(yaSel){ S.libroSel=lista.filter(q=>q!==yaSel.sm); libroSelGuardar(); requestDraw(); return; }
+      if(!S._libDib||!S._libBp) return;
+      let mejor=null, dm=6;
+      for(const [k,o] of S._libDib){ if(x<o.x0-8||x>o.x1+8) continue; const dd=Math.abs(o.y-y); if(dd<dm){ dm=dd; mejor=k; } }
+      if(mejor==null) return;
+      lista.push({p:(mejor>>1)*S._libBp, venta:!!(mejor&1)}); S.libroSel=lista; libroSelGuardar(); requestDraw();
+    });
     cont.addEventListener("mousemove", e=>{
       if(S.on.libro && tipLibro(e)) return;   // [AÑADIDO v163] tabla del libro
       const anyOn=S.on.heatmap||S.on.heat||S.on.book||S.on.react;
@@ -11467,6 +11911,504 @@ const MapaLiq = (function(){
   else init();
 
   // [AÑADIDO v164] resumen del 📖 Libro para la consola: escribe libro()
+  /* ═══════════════════════════════════════════════════════════════════════════════════════
+     [AÑADIDO v176 · rehecho v177] 🗺 MAPA DEL LIBRO — ventana completa estilo Coinglass
+     · Botones de temporalidad propios (Auto 1m 3m 5m 15m 30m 1h 4h), independientes del gráfico.
+     · Mercado: Futuros (libro que ya graba la página) o Spot (libro spot de Binance, 5000 niveles,
+       grabado cada 10 s desde que abres la página y guardado 3 días).
+     · Dibujo en LÍNEAS FINAS sobre fondo oscuro: el libro normal casi no se ve, los muros
+       resaltan de morado a amarillo (como Coinglass).
+     · Pasar el ratón por la etiqueta "Muro de compra/venta" resalta la zona en amarillo.
+     No toca el gráfico principal.
+     ═══════════════════════════════════════════════════════════════════════════════════════ */
+  const ML={ abierto:false, el:null, cv:null, cx:null, tip:null, timer:null,
+    vista:null, cols:null, colsT:0, rejilla:1, banda:0.01, color:"calor", unidad:"valor",
+    rMin:0.15, rMax:0.6, rango:1, rellenar:true, colsM:null, relleno:null, paneles:{vol:true, imb:true}, drag:null, raton:null, tf:"auto", mercado:"futuros",
+    velas:null, velasKey:"", velasT:0, cargando:false, errVelas:"", etq:[], yMan:null, dragY:null, _dib:null, _selY:[] };
+  const ML_TFS=[[1,'1m'],[3,'3m'],[5,'5m'],[15,'15m'],[30,'30m'],[60,'1h'],[240,'4h']];
+  const PAL_CALOR=(()=>{ const st=[[0,72,40,165],[0.45,118,72,235],[0.65,62,118,235],[0.75,40,170,205],[0.85,240,228,58],[1,252,238,60]], o=[];
+    for(let i=0;i<64;i++){ const t=i/63; let j=0; while(j<st.length-2 && t>st[j+1][0]) j++; const a=st[j], b=st[j+1], f=(t-a[0])/(b[0]-a[0]);
+      o.push(`rgb(${Math.round(a[1]+(b[1]-a[1])*f)},${Math.round(a[2]+(b[2]-a[2])*f)},${Math.round(a[3]+(b[3]-a[3])*f)})`); } return o; })();
+  const colCalor=t=>PAL_CALOR[Math.max(0,Math.min(63,Math.round(t*63)))];
+  const colLado=(t,venta)=> venta? `rgb(255,${Math.round(150-90*t)},${Math.round(110-70*t)})` : `rgb(${Math.round(80-50*t)},${Math.round(190+50*t)},${Math.round(140-50*t)})`;
+
+  /* ── Grabadora del libro SPOT de Binance (REST, 5000 niveles, cada 10 s) ──
+     Mismo formato que la de futuros: minuto -> {n, m: Map(clave -> usd)}, clave = bin*2 (+1 venta).
+     Guarda cada minuto en la misma base del navegador con el nombre "SPOT:PAR". */
+  const SPOT={sym:null, binPx:0, buckets:new Map(), orden:[], live:null, rows:[], err:"", px:0, ocupado:false};
+  function spotGuardarMinuto(min){
+    const bk=SPOT.buckets.get(min); if(!bk||!bk.n||!SPOT.binPx||!SPOT.sym) return;
+    const s='SPOT:'+SPOT.sym, lados=[[],[]]; for(const [k,v] of bk.m) lados[k&1].push([k,v/bk.n]);
+    const sel=[]; for(const a of lados){ a.sort((x,y)=>y[1]-x[1]); for(const e of a.slice(0,150)) sel.push(e); }
+    const pr=new Float32Array(sel.length), vv=new Float32Array(sel.length);
+    sel.forEach(([k,u],j)=>{ pr[j]=(k>>1)*SPOT.binPx; vv[j]=(k&1)? -u : u; });
+    const rec={s, t:min, p:pr, v:vv};
+    const i=SPOT.rows.findIndex(r=>r.t===min); if(i>=0) SPOT.rows[i]=rec; else SPOT.rows.push(rec);
+    const lim=Date.now()-HIST_DIAS*864e5; while(SPOT.rows.length && SPOT.rows[0].t<lim) SPOT.rows.shift();
+    histDB().then(db=>{ if(!db) return; try{ db.transaction('m','readwrite').objectStore('m').put(rec); }catch(_){} });
+  }
+  function spotCargar(sym){
+    const s='SPOT:'+sym;
+    histDB().then(db=>{ if(!db||SPOT.sym!==sym) return;
+      try{ const lim=Date.now()-HIST_DIAS*864e5, tx=db.transaction('m','readwrite'), st=tx.objectStore('m');
+        const rq=st.getAll(IDBKeyRange.bound([s,0],[s,Infinity]));
+        rq.onsuccess=()=>{ if(SPOT.sym!==sym) return; const out=[];
+          for(const r of rq.result){ if(r.t<lim){ st.delete([s,r.t]); continue; } out.push(r); }
+          const ya=new Set(out.map(o=>o.t)); for(const r of SPOT.rows) if(!ya.has(r.t)) out.push(r);
+          out.sort((a,b)=>a.t-b.t); SPOT.rows=out; if(ML.abierto){ ML.cols=null; mlDibujar(); } };
+      }catch(_){} });
+  }
+  async function spotTick(){
+    if(SPOT.ocupado) return; SPOT.ocupado=true;
+    const sym=String(symbol).toUpperCase();
+    try{
+      if(SPOT.sym!==sym){
+        if(SPOT.orden.length) spotGuardarMinuto(SPOT.orden[SPOT.orden.length-1]);
+        Object.assign(SPOT,{sym, binPx:0, buckets:new Map(), orden:[], live:null, rows:[], err:"", px:0});
+        spotCargar(sym);
+      }
+      const r=await fetch(`https://api.binance.com/api/v3/depth?symbol=${sym}&limit=5000`);
+      if(SPOT.sym!==sym) return;
+      if(!r.ok){ SPOT.err= r.status===400? 'Este par no existe en Binance Spot' : 'Binance Spot respondió '+r.status; return; }
+      const d=await r.json(); if(!d.bids||!d.bids.length||!d.asks||!d.asks.length){ SPOT.err='Binance Spot no dio libro'; return; }
+      SPOT.err="";
+      const px=(+d.bids[0][0] + +d.asks[0][0])/2; SPOT.px=px;
+      if(!SPOT.binPx || px/SPOT.binPx>10000 || px/SPOT.binPx<2500){ SPOT.binPx=px*0.0002; SPOT.buckets=new Map(); SPOT.orden=[]; }
+      const bp=SPOT.binPx, acc=new Map(); let total=0;
+      for(const [p,q] of d.bids){ const u=(+p)*(+q); if(!(u>0)) continue; total+=u; const k=Math.round(p/bp)*2;   acc.set(k,(acc.get(k)||0)+u); }
+      for(const [p,q] of d.asks){ const u=(+p)*(+q); if(!(u>0)) continue; total+=u; const k=Math.round(p/bp)*2+1; acc.set(k,(acc.get(k)||0)+u); }
+      const dust=total/8000, live=new Map(); for(const [k,v] of acc) if(v>=dust) live.set(k,v);
+      SPOT.live=live;
+      const min=Math.floor(Date.now()/60000)*60000; let b=SPOT.buckets.get(min);
+      if(!b){ if(SPOT.orden.length) spotGuardarMinuto(SPOT.orden[SPOT.orden.length-1]);
+        b={n:0,m:new Map()}; SPOT.buckets.set(min,b); SPOT.orden.push(min);
+        while(SPOT.orden.length>720) SPOT.buckets.delete(SPOT.orden.shift()); }
+      b.n++; for(const [k,v] of live) b.m.set(k,(b.m.get(k)||0)+v);
+    }catch(_){ SPOT.err='Sin conexión con Binance Spot'; }
+    finally{ SPOT.ocupado=false; }
+  }
+  setTimeout(()=>{ spotTick(); setInterval(spotTick,10000); }, 5000);
+  window.addEventListener('beforeunload', ()=>{ const u=SPOT.orden[SPOT.orden.length-1]; if(u) spotGuardarMinuto(u); });
+
+  // la fuente de datos según el mercado elegido
+  function mlFuente(){
+    if(ML.mercado==='spot') return {nombre:'Binance Spot', binPx:SPOT.binPx, rows:SPOT.sym===String(symbol).toUpperCase()? SPOT.rows:[], orden:SPOT.orden, buckets:SPOT.buckets, live:SPOT.live, px:SPOT.px, err:SPOT.err};
+    return {nombre:'Binance Futuros', binPx:LIB.binPx, rows:HIST.sym===String(symbol)? HIST.rows:[], orden:LIB.orden, buckets:LIB.buckets, live:LIB.live, px:livePrice(), err:""};
+  }
+  function mlPrimerMinuto(F){
+    let t=F.orden.length? F.orden[0] : Date.now();
+    if(F.rows.length) t=Math.min(t,F.rows[0].t);
+    return t;
+  }
+  function mlTfMin(){
+    if(ML.tf!=='auto') return +ML.tf;
+    const spanMin=(Date.now()-mlPrimerMinuto(mlFuente()))/60000;
+    for(const [m] of ML_TFS) if(spanMin/m<=110) return m;     // que lo grabado ocupe ~110 velas como mucho
+    return 240;
+  }
+  const mlKey=()=>ML.mercado+'|'+String(symbol).toUpperCase()+'|'+mlTfMin();
+  async function mlCargarVelas(){
+    const key=mlKey(), tfm=mlTfMin(), lab=(ML_TFS.find(x=>x[0]===tfm)||[1,'1m'])[1], sym=String(symbol).toUpperCase();
+    const url= ML.mercado==='spot' ? `https://api.binance.com/api/v3/klines?symbol=${sym}&interval=${lab}&limit=400`
+                                   : `https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=${lab}&limit=400`;
+    ML.cargando=true; mlBotones();
+    try{
+      const r=await fetch(url); const d=await r.json();
+      if(!Array.isArray(d)||!d.length){ ML.errVelas='No se pudieron cargar las velas '+lab+(ML.mercado==='spot'?' de spot':''); return; }
+      if(key!==mlKey()) return;                       // se cambió algo mientras cargaba
+      ML.velas=d.map(k=>({t:+k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4],q:+k[7],tb:+k[10]}));
+      if(ML.velasKey!==key) ML.vista=null;
+      ML.velasKey=key; ML.velasT=Date.now(); ML.errVelas=""; ML.cols=null;
+    }catch(_){ ML.errVelas='Sin conexión para cargar velas'; }
+    finally{ ML.cargando=false; mlBotones(); mlDibujar(); }
+  }
+  function mlVelas(F){
+    if(!ML.velas||ML.velasKey!==mlKey()) return null;
+    const C=ML.velas, u=C[C.length-1], p=F.px;
+    if(u && p>0){ u.c=p; if(p>u.h) u.h=p; if(p<u.l) u.l=p; }      // la última vela se mueve en vivo
+    return C;
+  }
+  // columnas por vela: minutos grabados en esta sesión + historia guardada (3 días), en una pasada
+  function mlColumnas(C,F){
+    const N=C.length; if(N<2||!F.binPx) return null;
+    const g=ML.rejilla, tf=C[1].t-C[0].t, cols=new Array(N).fill(null), cnt=new Int32Array(N);
+    const idx=t=>{ if(t<C[0].t) return -1; let a=0,b=N-1; while(a<b){ const m=(a+b+1)>>1; if(C[m].t<=t) a=m; else b=m-1; } return (t<C[a].t+tf)? a : -1; };
+    const col=i=>{ let c=cols[i]; if(!c){ c=new Map(); cols[i]=c; } return c; };
+    const add=(c,k,v)=>{ const kk=Math.floor((k>>1)/g)*2+(k&1); c.set(kk,(c.get(kk)||0)+v); };
+    const desde=F.orden.length? F.orden[0] : Infinity;
+    for(const r of F.rows){ if(r.t>=desde) break; const i=idx(r.t); if(i<0) continue;
+      const c=col(i); cnt[i]++;
+      for(let j=0;j<r.p.length;j++) add(c, Math.round(r.p[j]/F.binPx)*2+(r.v[j]<0?1:0), Math.abs(r.v[j])); }
+    for(const min of F.orden){ const b=F.buckets.get(min); if(!b||!b.n) continue; const i=idx(min); if(i<0) continue;
+      const c=col(i); cnt[i]++; for(const [k,v] of b.m) add(c,k,v/b.n); }
+    for(let i=0;i<N;i++) if(cols[i]) for(const [k,v] of cols[i]) cols[i].set(k,v/cnt[i]);   // media de los minutos
+    return cols;
+  }
+
+  /* [v180] 1) Cada columna se queda SOLO con sus muros (≥3× la mediana de sus vecinos, máx. 25 por lado)
+     → zonas ordenadas en vez de un código de barras.
+     2) Huecos sin grabación (página cerrada): si un muro estaba ANTES y sigue DESPUÉS del hueco,
+     se une con una raya (más tenue) — se supone que siguió ahí. Se puede apagar. */
+  function mlMuros(cols){
+    const out=cols.map(c=>{ if(!c) return null; const keep=murosDe(c,1,25), m=new Map(); for(const k of keep) m.set(k,c.get(k)); return m; });
+    ML.relleno=new Set();
+    if(ML.rellenar){ let p=-1;
+      for(let i=0;i<out.length;i++){ if(!out[i]) continue;
+        if(p>=0 && i-p>1){ const a=out[p], b=out[i], m=new Map();
+          for(const [k,v] of a){ const w=b.get(k)||b.get(k+2)||b.get(k-2); if(w) m.set(k,Math.min(v,w)); }
+          if(m.size) for(let j=p+1;j<i;j++){ out[j]=m; ML.relleno.add(j); } }
+        p=i; } }
+    return out;
+  }
+
+  const ML_BTN="background:#1e222d;color:#b2b8c6;border:1px solid #2a2e39;border-radius:5px;padding:3px 9px;font-size:12px;font-weight:600;cursor:pointer;";
+  const ML_BTN_ON="background:#f5e83a;color:#131722;border:1px solid #f5e83a;border-radius:5px;padding:3px 9px;font-size:12px;font-weight:700;cursor:pointer;";
+  function mlBotones(){
+    if(!ML.el) return;
+    ML.el.querySelectorAll('[data-mltf]').forEach(b=>{ const on=b.dataset.mltf===String(ML.tf); b.style.cssText=on?ML_BTN_ON:ML_BTN;
+      if(b.dataset.mltf==='auto') b.textContent= ML.tf==='auto'? 'Auto · '+((ML_TFS.find(x=>x[0]===mlTfMin())||[0,''])[1]) : 'Auto'; });
+    ML.el.querySelectorAll('[data-mlmk]').forEach(b=>{ b.style.cssText= b.dataset.mlmk===ML.mercado? ML_BTN_ON : ML_BTN; });
+    const c=ML.el.querySelector('#ml-cargando'); if(c) c.textContent= ML.cargando? 'cargando velas…' : '';
+  }
+
+  // [v185] muros marcados con clic en esta ventana (por mercado y par, guardados en el navegador)
+  function mlSelLista(){ const key='mlSel_'+ML.mercado+'_'+String(symbol).toUpperCase();
+    if(ML._selKey!==key){ ML._selKey=key; ML.sel=[]; try{ ML.sel=JSON.parse(localStorage.getItem(key)||'[]')||[]; }catch(_){} }
+    return ML.sel; }
+  function mlSelGuardar(){ try{ localStorage.setItem(ML._selKey, JSON.stringify(ML.sel||[])); }catch(_){} }
+  function mlClic(x,y){
+    const L=ML._lay; if(!L||x>L.mainW+L.bookW||y>L.mainH) return;
+    const lista=mlSelLista();
+    const ya=(ML._selY||[]).find(o=>Math.abs(o.y-y)<=Math.max(6,o.hh/2));
+    if(ya){ ML.sel=lista.filter(q=>q!==ya.sm); mlSelGuardar(); mlDibujar(); return; }      // ya marcado → quitar
+    const e=(ML.etq||[]).find(e=>x>=e.x&&x<=e.x+e.w&&y>=e.y&&y<=e.y+e.h);
+    if(e){ lista.push({p:e.pr, venta:e.venta}); ML.sel=lista; mlSelGuardar(); mlDibujar(); return; }
+    if(!ML._dib) return; let mejor=null, dm=6;
+    for(const [k,o] of ML._dib){ if(x<o.x0-8||x>o.x1+8) continue; const d=Math.abs(o.y-y); if(d<dm){ dm=d; mejor=o; } }
+    if(!mejor) return;
+    lista.push({p:mejor.p, venta:mejor.venta}); ML.sel=lista; mlSelGuardar(); mlDibujar();
+  }
+
+  function mlAbrir(){
+    if(ML.abierto) return; ML.abierto=true;
+    const el=document.createElement('div'); ML.el=el;
+    el.style.cssText="position:fixed;inset:0;z-index:99990;background:#0f1219;color:#d1d4dc;font-family:Inter,Segoe UI,Arial,sans-serif;display:flex;flex-direction:column;";
+    const sel=(id,opts,val)=>`<select id="${id}" style="background:#1e222d;color:#d1d4dc;border:1px solid #2a2e39;border-radius:6px;padding:3px 8px;font-size:12px;font-weight:600;">${opts.map(o=>`<option value="${o[0]}" ${String(o[0])===String(val)?'selected':''}>${o[1]}</option>`).join('')}</select>`;
+    const lab=t=>`<span style="color:#8b93a6;font-size:12px;">${t}</span>`;
+    el.innerHTML=`
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid #22262f;flex-wrap:wrap;">
+        <b style="font-size:15px;color:#fff;">Mapa de calor del libro</b>
+        <span id="ml-sub" style="color:#8b93a6;font-size:12px;"></span>
+        <span style="display:flex;gap:4px;">${[['futuros','Futuros'],['spot','Spot']].map(x=>`<button data-mlmk="${x[0]}" style="${ML_BTN}">${x[1]}</button>`).join('')}</span>
+        <span style="display:flex;gap:4px;">${[['auto','Auto'],...ML_TFS.map(x=>[x[0],x[1]])].map(x=>`<button data-mltf="${x[0]}" style="${ML_BTN}">${x[1]}</button>`).join('')}</span>
+        <span id="ml-cargando" style="color:#f5e83a;font-size:11px;"></span>
+        <span style="flex:1"></span>
+        <button id="ml-captura" style="${ML_BTN}">📷 Captura</button>
+        <button id="ml-reset" style="${ML_BTN}">⟲ Restablecer vista</button>
+        <button id="ml-cerrar" style="background:#2a2e39;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer;">✕</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:6px 14px;border-bottom:1px solid #22262f;flex-wrap:wrap;">
+        ${lab('Coloración')}${sel('ml-color',[['calor','Calor'],['lado','Compra/Venta']],ML.color)}
+        ${lab('Unidad')}${sel('ml-unidad',[['valor','Valor'],['cantidad','Cantidad']],ML.unidad)}
+        ${lab('Rango de color')}<span class="ml-dual" style="position:relative;display:inline-block;width:170px;height:18px;">
+          <span style="position:absolute;left:0;right:0;top:7px;height:4px;border-radius:2px;background:linear-gradient(90deg,#1e222d 0%,#1e222d var(--a,7%),rgb(72,40,165) var(--a,7%),rgb(118,72,235),rgb(62,118,235),rgb(36,190,175),rgb(160,226,70),rgb(252,238,60) var(--b,50%),rgb(252,238,60) 100%);"></span>
+          <input id="ml-rmin" type="range" min="0" max="1" step="0.01" value="${ML.rMin/2}">
+          <input id="ml-rmax" type="range" min="0" max="1" step="0.01" value="${ML.rMax/2}">
+        </span>
+        <style>.ml-dual input{position:absolute;left:0;top:0;width:100%;height:18px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none;}
+          .ml-dual input::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#fff;border:2px solid #f5e83a;cursor:pointer;}
+          .ml-dual input::-moz-range-thumb{pointer-events:auto;width:11px;height:11px;border-radius:50%;background:#fff;border:2px solid #f5e83a;cursor:pointer;}
+          .ml-dual input::-webkit-slider-runnable-track{background:none;} .ml-dual input::-moz-range-track{background:none;}</style>
+        <span id="ml-rangotxt" style="font-size:12px;color:#d1d4dc;min-width:80px;"></span>
+        ${lab('Rejilla')}${sel('ml-rejilla',[[1,'×1'],[2,'×2'],[4,'×4'],[8,'×8']],ML.rejilla)}
+        ${lab('Desequilibrio')}${sel('ml-banda',[[0.01,'±1%'],[0.02,'±2%'],[0.05,'±5%']],ML.banda)}
+        <label style="display:flex;align-items:center;gap:5px;color:#8b93a6;font-size:12px;cursor:pointer;" title="Une un muro a través de las horas en que la página estuvo cerrada, si estaba antes y sigue después"><input id="ml-rellenar" type="checkbox" ${ML.rellenar?'checked':''} style="accent-color:#f5e83a;">Unir huecos</label>
+        ${lab('Paneles')}${sel('ml-paneles',[['ambos','Volumen + Desequilibrio'],['vol','Volumen'],['imb','Desequilibrio'],['no','Ninguno']],'ambos')}
+        <span id="ml-info" style="color:#6b7385;font-size:11px;margin-left:auto;"></span>
+      </div>
+      <div id="ml-area" style="position:relative;flex:1;min-height:0;"><canvas id="ml-cv" style="position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;"></canvas></div>`;
+    document.body.appendChild(el);
+    ML.cv=el.querySelector('#ml-cv'); ML.cx=ML.cv.getContext('2d');
+    const tip=document.createElement('div'); ML.tip=tip;
+    tip.style.cssText="position:absolute;pointer-events:none;display:none;z-index:5;background:rgba(19,23,34,.97);border:1px solid #2a2e39;border-radius:9px;padding:10px 12px;font-size:11px;white-space:nowrap;box-shadow:0 8px 26px rgba(0,0,0,.6);font-family:Inter,Segoe UI,Arial,sans-serif;color:#d1d4dc;";
+    el.querySelector('#ml-area').appendChild(tip);
+    const q=id=>el.querySelector(id);
+    el.querySelectorAll('[data-mltf]').forEach(b=>b.onclick=()=>{ ML.tf=b.dataset.mltf; ML.vista=null; ML.yMan=null; ML.cols=null; mlBotones(); mlCargarVelas(); });
+    el.querySelectorAll('[data-mlmk]').forEach(b=>b.onclick=()=>{ ML.mercado=b.dataset.mlmk; ML.vista=null; ML.yMan=null; ML.cols=null; mlBotones(); mlCargarVelas(); if(ML.mercado==='spot' && !SPOT.live) spotTick().then(()=>{ ML.cols=null; mlDibujar(); }); });
+    q('#ml-cerrar').onclick=mlCerrar;
+    q('#ml-reset').onclick=()=>{ ML.vista=null; ML.yMan=null; mlDibujar(); };
+    q('#ml-captura').onclick=()=>{ try{ ML.cv.toBlob(b=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='mapa_libro_'+String(symbol)+'.png'; a.click(); }); }catch(_){} };
+    q('#ml-color').onchange=e=>{ ML.color=e.target.value; mlDibujar(); };
+    q('#ml-unidad').onchange=e=>{ ML.unidad=e.target.value; mlDibujar(); };
+    // [v179] rango de color con DOS tiradores: lo que esté por debajo del mínimo no se pinta; desde el máximo, amarillo
+    const pintaDual=()=>{ const d=el.querySelector('.ml-dual'); d.style.setProperty('--a',(ML.rMin/2*100)+'%'); d.style.setProperty('--b',(ML.rMax/2*100)+'%'); };
+    q('#ml-rmin').oninput=e=>{ ML.rMin=Math.min(+e.target.value*2, ML.rMax-0.04); e.target.value=ML.rMin/2; pintaDual(); mlDibujar(); };
+    q('#ml-rmax').oninput=e=>{ ML.rMax=Math.max(+e.target.value*2, ML.rMin+0.04); e.target.value=ML.rMax/2; pintaDual(); mlDibujar(); };
+    pintaDual();
+    q('#ml-rellenar').onchange=e=>{ ML.rellenar=e.target.checked; ML.cols=null; mlDibujar(); };
+    q('#ml-rejilla').onchange=e=>{ ML.rejilla=+e.target.value; ML.cols=null; mlDibujar(); };
+    q('#ml-banda').onchange=e=>{ ML.banda=+e.target.value; mlDibujar(); };
+    q('#ml-paneles').onchange=e=>{ const v=e.target.value; ML.paneles={vol:v==='ambos'||v==='vol', imb:v==='ambos'||v==='imb'}; mlDibujar(); };
+    ML._esc=e=>{ if(e.key==='Escape') mlCerrar(); }; document.addEventListener('keydown',ML._esc);
+    // zoom con la rueda (alrededor del ratón) y arrastre horizontal
+    // [v178] escala de precio: arrastrar arriba/abajo o rueda encima = estirar/encoger · doble clic = automático
+    const enEje=(x,y)=>{ const L=ML._lay; return L && x>L.mainW+L.bookW && y<L.mainH; };
+    const escalarY=f=>{ const lo=ML._lo, hi=ML._hi; if(!(hi>lo)) return; const m=(lo+hi)/2, h=(hi-lo)/2*f; ML.yMan={lo:m-h, hi:m+h}; };
+    ML.cv.addEventListener('dblclick',e=>{ const r=ML.cv.getBoundingClientRect(); if(enEje(e.clientX-r.left,e.clientY-r.top)){ ML.yMan=null; mlDibujar(); } });
+    ML.cv.addEventListener('wheel',e=>{ e.preventDefault(); const L=ML._lay; if(!L||!ML.vista) return;
+      const r=ML.cv.getBoundingClientRect(), x=e.clientX-r.left;
+      if(enEje(x,e.clientY-r.top)){ escalarY(e.deltaY>0?1.12:1/1.12); mlDibujar(); return; }
+      const iRat=ML.vista.i0+x/L.cw;
+      const f=e.deltaY>0?1.15:1/1.15; const n=Math.max(20,Math.min((ML.velas||[]).length*1.3+10, ML.vista.n*f));
+      ML.vista.i0=iRat-(iRat-ML.vista.i0)*n/ML.vista.n; ML.vista.n=n; mlDibujar(); },{passive:false});
+    ML.cv.addEventListener('mousedown',e=>{ const r=ML.cv.getBoundingClientRect();
+      if(enEje(e.clientX-r.left,e.clientY-r.top)){ ML.dragY={y:e.clientY, lo:ML._lo, hi:ML._hi}; return; }
+      ML.drag={x:e.clientX, y:e.clientY, i0:ML.vista?ML.vista.i0:0, lo:ML._lo, hi:ML._hi}; ML._down={x:e.clientX,y:e.clientY}; });
+    // [v185] clic corto (sin arrastrar) = marcar/quitar muro
+    ML.cv.addEventListener('click',e=>{ const d=ML._down; ML._down=null; if(!d||Math.hypot(e.clientX-d.x,e.clientY-d.y)>4) return;
+      const r=ML.cv.getBoundingClientRect(); mlClic(e.clientX-r.left,e.clientY-r.top); });
+    window.addEventListener('mouseup',ML._up=()=>{ ML.drag=null; ML.dragY=null; });
+    ML.cv.addEventListener('mousemove',e=>{ const r=ML.cv.getBoundingClientRect(); ML.raton={x:e.clientX-r.left,y:e.clientY-r.top};
+      const L=ML._lay;
+      ML.cv.style.cursor= (ML.dragY||enEje(ML.raton.x,ML.raton.y))? 'ns-resize' : 'crosshair';
+      if(ML.dragY && L){ const d=ML.dragY, f=Math.exp((e.clientY-d.y)*0.006), m=(d.lo+d.hi)/2, h=(d.hi-d.lo)/2*f; ML.yMan={lo:m-h, hi:m+h}; }
+      else if(ML.drag && L && ML.vista){ ML.vista.i0=ML.drag.i0-(e.clientX-ML.drag.x)/L.cw;
+        // arrastrar también sube/baja el gráfico (pasa a escala manual)
+        const dy=e.clientY-ML.drag.y; if(Math.abs(dy)>3 || ML.yMan){ const dp=dy/L.mainH*(ML.drag.hi-ML.drag.lo); ML.yMan={lo:ML.drag.lo+dp, hi:ML.drag.hi+dp}; } }
+      mlDibujar(); });
+    ML.cv.addEventListener('mouseleave',()=>{ ML.raton=null; ML.tip.style.display='none'; mlDibujar(); });
+    ML.timer=setInterval(()=>{ if(Date.now()-ML.colsT>10000) ML.cols=null;
+      if(!ML.cargando && (Date.now()-ML.velasT>30000 || ML.velasKey!==mlKey())) mlCargarVelas(); mlBotones(); mlDibujar(); },2000);
+    mlBotones(); mlCargarVelas(); mlDibujar();
+  }
+  function mlCerrar(){
+    if(!ML.abierto) return; ML.abierto=false; clearInterval(ML.timer);
+    document.removeEventListener('keydown',ML._esc); window.removeEventListener('mouseup',ML._up);
+    if(ML.el) ML.el.remove(); ML.el=null; ML.cols=null;
+  }
+
+  function mlMensaje(cx,mainW,mainH,m1,m2){
+    cx.font='bold 15px Inter,Arial'; const w1=cx.measureText(m1).width; cx.font='12px Inter,Arial'; const w2=cx.measureText(m2).width;
+    const bw=Math.max(w1,w2)+40, bxx=mainW/2-bw/2, byy=mainH/2-36;
+    cx.fillStyle='rgba(30,34,45,0.95)'; cx.fillRect(bxx,byy,bw,64); cx.strokeStyle='#2a2e39'; cx.strokeRect(bxx+0.5,byy+0.5,bw,64);
+    cx.textBaseline='middle'; cx.fillStyle='#fff'; cx.font='bold 15px Inter,Arial'; cx.fillText(m1,mainW/2-w1/2,byy+22);
+    cx.fillStyle='#8b93a6'; cx.font='12px Inter,Arial'; cx.fillText(m2,mainW/2-w2/2,byy+44);
+  }
+
+  function mlDibujar(){
+    if(!ML.abierto||!ML.cv) return;
+    const F=mlFuente(), cv=ML.cv, cx=ML.cx;
+    const dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+    if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){ cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); }
+    cx.setTransform(dpr,0,0,dpr,0,0);
+    cx.fillStyle='#0f1219'; cx.fillRect(0,0,W,H);
+    const sub=ML.el.querySelector('#ml-sub'), info=ML.el.querySelector('#ml-info');
+    const C=mlVelas(F)||[], N=C.length;
+    const tfS=N>1? Math.round((C[1].t-C[0].t)/1000) : 0, tfTxt= tfS>=86400? (tfS/86400)+'D' : tfS>=3600? (tfS/3600)+'H' : (tfS/60)+'m';
+    sub.textContent=`${String(symbol).toUpperCase()} · ${F.nombre}${N>1?' · '+tfTxt:''}`;
+    if(F.err){ mlMensaje(cx,W,H,F.err,'Elige Futuros o cambia de par.'); return; }
+    if(N<2){ mlMensaje(cx,W,H, ML.errVelas||'Cargando velas…', ML.errVelas? 'Se reintenta solo cada 30 s.' : ''); return; }
+    if(!F.binPx){ mlMensaje(cx,W,H,'Esperando el primer libro…','Tarda unos segundos.'); return; }
+    if(!ML.cols||ML.cols.length!==N){ ML.cols=mlColumnas(C,F)||new Array(N).fill(null); ML.colsM=mlMuros(ML.cols); ML.colsT=Date.now(); }
+    const cols=ML.cols, colsM=ML.colsM, g=ML.rejilla, bp=F.binPx*g;
+    // --- disposición
+    const axisW=72, bookW=170, timeH=22, panH=72;
+    const nPan=(ML.paneles.vol?1:0)+(ML.paneles.imb?1:0);
+    const mainW=W-axisW-bookW, mainH=H-timeH-nPan*panH;
+    if(!ML.vista){ let f0=cols.findIndex(c=>c); if(f0<0) f0=N-1;
+      const n=Math.max(60, Math.min(N, N-f0+20)); ML.vista={i0:Math.max(0,N-n), n:Math.round(n*1.28)}; }   // hueco a la derecha para las etiquetas
+    const v=ML.vista, cw=mainW/v.n; ML._lay={cw,mainW,mainH,axisW,bookW,panH,timeH};
+    const iA=Math.max(0,Math.floor(v.i0)), iB=Math.min(N-1,Math.ceil(v.i0+v.n));
+    const xOf=i=>(i-v.i0+0.5)*cw;
+    const pAct=F.px||C[N-1].c;
+    // rango de precio: velas visibles con margen
+    let lo=Infinity, hi=-Infinity; for(let i=iA;i<=iB;i++){ lo=Math.min(lo,C[i].l); hi=Math.max(hi,C[i].h); }
+    if(!(hi>lo)){ lo=pAct*0.99; hi=pAct*1.01; }
+    const pad=(hi-lo)*0.25; lo=Math.min(lo-pad, pAct*0.95); hi=Math.max(hi+pad, pAct*1.05);   // al menos ±5%: se ven los muros lejanos
+    if(ML.yMan && ML.yMan.hi>ML.yMan.lo){ lo=ML.yMan.lo; hi=ML.yMan.hi; }                      // [v178] escala manual
+    ML._lo=lo; ML._hi=hi;
+    const yOfP=p=>(hi-p)/(hi-lo)*mainH, pOfY=y=>hi-y/mainH*(hi-lo);
+    // --- cuadrícula y eje de precio
+    const paso=(()=>{ const raw=(hi-lo)/8, e=Math.pow(10,Math.floor(Math.log10(raw))), m=raw/e; return (m<1.5?1:m<3.5?2:m<7.5?5:10)*e; })();
+    cx.strokeStyle='rgba(42,46,57,0.45)'; cx.lineWidth=1; cx.font='11px Inter,Arial'; cx.fillStyle='#8b93a6'; cx.textBaseline='middle';
+    for(let p=Math.ceil(lo/paso)*paso;p<=hi;p+=paso){ const y=Math.round(yOfP(p))+0.5; cx.beginPath(); cx.moveTo(0,y); cx.lineTo(mainW+bookW,y); cx.stroke();
+      cx.fillText(fmtP(p), mainW+bookW+8, y); }
+    const pasoT=Math.max(1,Math.round(110/cw));
+    for(let i=iA;i<=iB;i++) if(i%pasoT===0){ const x=Math.round(xOf(i))+0.5; cx.beginPath(); cx.moveTo(x,0); cx.lineTo(x,mainH); cx.stroke(); }
+    // --- escala de color: percentil 99.5 de lo visible
+    const conv=(val,i)=> ML.unidad==='cantidad' ? val/(C[i].c||1) : val;
+    const vis=[]; for(let i=iA;i<=iB;i++){ const c=colsM[i]; if(c && !ML.relleno.has(i)) for(const val of c.values()) vis.push(conv(val,i)); }
+    vis.sort((a,b)=>a-b); const ref= vis.length? (vis[Math.floor(vis.length*0.995)]||vis[vis.length-1]) : 1;
+    const maxCol=ref*ML.rMax, minCol=ref*ML.rMin; ML._maxCol=maxCol;
+    const tCol=x=> x<minCol? -1 : Math.min(1,(x-minCol)/Math.max(1e-9,maxCol-minCol));   // -1 = no se pinta
+    const fmtU=x=> ML.unidad==='cantidad' ? (x>=1e3? (x/1e3).toFixed(1)+'K' : x.toFixed(1))+' '+String(symbol).replace(/USDT$/i,'') : (x>=1e6? '$'+(x/1e6).toFixed(2)+'M' : x>=1e3? '$'+Math.round(x/1e3)+'K' : '$'+Math.round(x));
+    ML.el.querySelector('#ml-rangotxt').textContent=fmtU(minCol)+' – '+fmtU(maxCol);
+    // --- mapa del libro en LÍNEAS FINAS (estilo Coinglass): fondo oscuro, los muros brillan
+    cx.save(); cx.beginPath(); cx.rect(0,0,mainW,mainH); cx.clip();
+    let conDatos=0;
+    const hCel=Math.abs(yOfP(0)-yOfP(bp));
+    const dib=new Map(); ML._dib=dib;
+    for(let i=iA;i<=iB;i++){
+      if(cols[i]) conDatos++;
+      const c=colsM[i]; if(!c) continue; const est=ML.relleno.has(i); cx.globalAlpha= est? 0.45 : 1;
+      const xa=Math.floor(xOf(i)-cw/2), xb=Math.ceil(xOf(i)+cw/2), ancho=Math.max(1,xb-xa);
+      for(const [k,val] of c){
+        // [v179] SOLO muros (≥ mínimo del rango) en raya nítida: morado los medianos, amarillo los grandes
+        const t=tCol(conv(val,i)); if(t<0) continue;
+        const pr=(k>>1)*bp+bp/2, y=yOfP(pr); if(y<-2||y>mainH+2) continue;
+        const grosor= t>=0.85 && hCel>=3 ? 2 : 1;
+        cx.fillStyle= ML.color==='lado' ? colLado(t,!!(k&1)) : colCalor(t);
+        cx.fillRect(xa, Math.round(y)-(grosor>>1), ancho, grosor);
+        const o=dib.get(k); if(!o) dib.set(k,{y,x0:xa,x1:xa+ancho,p:pr,venta:!!(k&1)}); else { o.x0=Math.min(o.x0,xa); o.x1=Math.max(o.x1,xa+ancho); }
+      }
+    }
+    cx.globalAlpha=1;
+    // --- velas finas encima
+    for(let i=iA;i<=iB;i++){ const k=C[i], x=xOf(i), up=k.c>=k.o; cx.fillStyle= up? '#2ed47a' : '#ff5a36';
+      const bw=Math.max(1,cw*0.5); cx.fillRect(Math.round(x)-0.5, yOfP(k.h), 1, Math.max(1,yOfP(k.l)-yOfP(k.h)));
+      const y0=yOfP(Math.max(k.o,k.c)), y1=yOfP(Math.min(k.o,k.c)); cx.fillRect(x-bw/2, y0, bw, Math.max(1,y1-y0)); }
+    // línea de precio actual
+    const yP=Math.round(yOfP(pAct))+0.5; cx.setLineDash([3,4]); cx.strokeStyle='rgba(209,212,220,0.45)'; cx.beginPath(); cx.moveTo(0,yP); cx.lineTo(mainW,yP); cx.stroke(); cx.setLineDash([]);
+    cx.restore();
+    // --- panel "Libro actual"
+    const bx=mainW; cx.fillStyle='#0f1219'; cx.fillRect(bx,0,bookW,mainH);
+    cx.strokeStyle='#22262f'; cx.beginPath(); cx.moveTo(bx+0.5,0); cx.lineTo(bx+0.5,mainH); cx.stroke();
+    cx.fillStyle='#8b93a6'; cx.font='11px Inter,Arial'; cx.textBaseline='top'; cx.fillText('Libro actual', bx+8, 6); cx.textBaseline='middle';
+    ML.etq=[]; let vivoG=null;
+    if(F.live){
+      const vivo=new Map(); vivoG=vivo; for(const [k,val] of F.live){ const b=Math.floor((k>>1)/g), kk=b*2+(k&1); vivo.set(kk,(vivo.get(kk)||0)+val); }
+      let mx=0; for(const [k,val] of vivo){ const pr=(k>>1)*bp+bp/2; if(pr<lo||pr>hi) continue; if(val>mx) mx=val; }
+      const mayores=[[null,0],[null,0]];
+      for(const [k,val] of vivo){ const pr=(k>>1)*bp+bp/2; if(pr<lo||pr>hi) continue;
+        const y=yOfP(pr); if(y<22) continue; const L=Math.max(1,(bookW-16)*val/(mx||1)), venta=!!(k&1);
+        cx.fillStyle= venta? 'rgba(255,100,60,0.9)' : 'rgba(46,212,122,0.9)'; cx.fillRect(bx+6, Math.round(y)-0.5, L, 1);
+        if(val>mayores[venta?1:0][1]) mayores[venta?1:0]=[pr,val]; }
+      cx.font='bold 11px Inter,Arial';
+      for(const lado of [0,1]){ const [pr,val]=mayores[lado]; if(pr==null) continue;
+        const venta=lado===1, t=(venta?'Muro de venta ':'Muro de compra ')+fmtU(ML.unidad==='cantidad'? val/pAct : val);
+        const tw=cx.measureText(t).width, y=Math.round(yOfP(pr)), x0=bx-tw-14;
+        ML.etq.push({x:x0-5,y:y-9,w:tw+10,h:18,pr,val,venta,t});
+      }
+    }
+    // --- etiquetas de muro; con el ratón encima: la zona se resalta en amarillo de lado a lado
+    for(const e of ML.etq){
+      const r=ML.raton, sobre= r && r.x>=e.x && r.x<=e.x+e.w && r.y>=e.y && r.y<=e.y+e.h;
+      e.sobre=sobre;
+      if(sobre){
+        const ya=yOfP(e.pr+bp/2), yb=yOfP(e.pr-bp/2), hh=Math.max(6,yb-ya), yc=(ya+yb)/2;
+        cx.fillStyle='rgba(245,232,58,0.13)'; cx.fillRect(0, yc-hh/2, bx, hh);
+        cx.strokeStyle='#f5e83a'; cx.lineWidth=1.5; cx.strokeRect(0.75, yc-hh/2, bx-1.5, hh);
+        cx.setLineDash([4,3]); cx.beginPath(); cx.moveTo(0,Math.round(yc)+0.5); cx.lineTo(bx,Math.round(yc)+0.5); cx.stroke(); cx.setLineDash([]); cx.lineWidth=1;
+      }
+      cx.fillStyle= sobre? '#f5e83a' : 'rgba(15,18,25,0.92)'; cx.fillRect(e.x,e.y,e.w,e.h);
+      cx.strokeStyle= sobre? '#f5e83a' : (e.venta? 'rgba(255,100,60,0.95)' : 'rgba(46,212,122,0.95)'); cx.strokeRect(e.x+0.5,e.y+0.5,e.w,e.h);
+      cx.font='bold 11px Inter,Arial'; cx.fillStyle= sobre? '#131722' : (e.venta? '#ff8a5c' : '#4cd98a'); cx.fillText(e.t,e.x+5,e.y+9);
+      if(sobre){ const d=((e.pr-pAct)/pAct*100), txt=`${fmtP(e.pr)}  ·  ${d>=0?'+':''}${d.toFixed(2)}% del precio`;
+        const tw=cx.measureText(txt).width; cx.fillStyle='rgba(15,18,25,0.95)'; cx.fillRect(e.x+e.w-tw-10, e.y+e.h+3, tw+10, 18);
+        cx.fillStyle='#f5e83a'; cx.fillText(txt, e.x+e.w-tw-5, e.y+e.h+12); }
+    }
+    // [v185] muros MARCADOS con clic: banda amarilla fija + etiqueta; otro clic encima la quita
+    ML._selY=[];
+    for(const sm of mlSelLista()){
+      const kb=Math.floor(sm.p/bp), pr=kb*bp+bp/2, k=kb*2+(sm.venta?1:0);
+      const ya=yOfP(pr+bp/2), yb=yOfP(pr-bp/2), hh=Math.max(6,yb-ya), yc=(ya+yb)/2; if(yc<0||yc>mainH) continue;
+      ML._selY.push({y:yc,hh,sm});
+      cx.fillStyle='rgba(245,232,58,0.13)'; cx.fillRect(0, yc-hh/2, bx, hh);
+      cx.strokeStyle='#f5e83a'; cx.lineWidth=1.5; cx.strokeRect(0.75, yc-hh/2, bx-1.5, hh);
+      cx.setLineDash([4,3]); cx.beginPath(); cx.moveTo(0,Math.round(yc)+0.5); cx.lineTo(bx,Math.round(yc)+0.5); cx.stroke(); cx.setLineDash([]); cx.lineWidth=1;
+      const vv= vivoG? (vivoG.get(k)||0) : 0, d=(pr-pAct)/pAct*100;
+      const t=(sm.venta?'Muro de venta ':'Muro de compra ')+(vv? fmtU(ML.unidad==='cantidad'? vv/pAct : vv) : 'retirado')+`  ·  ${fmtP(pr)}  ·  ${d>=0?'+':''}${d.toFixed(2)}%  ✕`;
+      cx.font='bold 11px Inter,Arial'; const tw=cx.measureText(t).width, x0=bx-tw-14;
+      cx.fillStyle='#f5e83a'; cx.fillRect(x0-5,yc-9,tw+10,18);
+      cx.fillStyle='#131722'; cx.fillText(t,x0,yc);
+    }
+    // etiqueta del precio actual en el eje
+    cx.fillStyle='#d1d4dc'; cx.fillRect(mainW+bookW+2, yP-9, axisW-4, 18); cx.fillStyle='#131722'; cx.font='bold 11px Inter,Arial'; cx.fillText(fmtP(pAct), mainW+bookW+6, yP);
+    // --- paneles inferiores
+    let py=mainH;
+    const sep=y=>{ cx.strokeStyle='#22262f'; cx.beginPath(); cx.moveTo(0,y+0.5); cx.lineTo(W,y+0.5); cx.stroke(); };
+    if(ML.paneles.vol){
+      sep(py); let mv=1; for(let i=iA;i<=iB;i++){ const k=C[i]; if(k.q>0){ const b=k.tb||0; mv=Math.max(mv,b,k.q-b); } }
+      const mid=py+panH/2;
+      for(let i=iA;i<=iB;i++){ const k=C[i]; if(!(k.q>0)) continue; const b=k.tb||0, s=k.q-b, x=xOf(i), bw=Math.max(1,cw*0.6);
+        cx.fillStyle='rgba(46,212,122,0.9)'; const hb=(panH/2-4)*b/mv; cx.fillRect(x-bw/2, mid-hb, bw, hb);
+        cx.fillStyle='rgba(255,100,60,0.9)'; const hs=(panH/2-4)*s/mv; cx.fillRect(x-bw/2, mid, bw, hs); }
+      const u=C[Math.min(iB,N-1)]; cx.font='11px Inter,Arial'; cx.fillStyle='#8b93a6'; cx.fillText('Volumen  compra / venta', 8, py+11);
+      if(u&&u.q>0){ cx.fillStyle='#4cd98a'; cx.fillText(fmtU(u.tb||0), mainW+bookW+8, py+30); cx.fillStyle='#ff8a5c'; cx.fillText(fmtU(u.q-(u.tb||0)), mainW+bookW+8, py+46); }
+      py+=panH;
+    }
+    if(ML.paneles.imb){
+      sep(py); const mid=py+panH/2, bandaI=ML.banda, ptsI=[];
+      for(let i=iA;i<=iB;i++){ const c=cols[i]; if(!c){ ptsI.push(null); continue; } let B=0,A=0; const r0=C[i].c;
+        for(const [k,val] of c){ const pr=(k>>1)*bp+bp/2; if(Math.abs(pr-r0)/r0>bandaI) continue; if(k&1) A+=val; else B+=val; }
+        ptsI.push((B+A)>0? (B-A)/(B+A) : null); }
+      cx.strokeStyle='rgba(139,147,166,0.35)'; cx.beginPath(); cx.moveTo(0,mid+0.5); cx.lineTo(mainW,mid+0.5); cx.stroke();
+      ptsI.forEach((val,j)=>{ if(val==null) return; const i=iA+j, x=xOf(i), bw=Math.max(1,cw); const hgt=(panH/2-4)*Math.abs(val);
+        cx.fillStyle= val>=0? 'rgba(46,212,122,0.7)' : 'rgba(255,100,60,0.7)'; cx.fillRect(x-bw/2, val>=0? mid-hgt : mid, bw, hgt); });
+      const ult=[...ptsI].reverse().find(x=>x!=null);
+      cx.font='11px Inter,Arial'; cx.fillStyle='#8b93a6'; cx.fillText('Desequilibrio del libro ±'+(bandaI*100)+'% (compra − venta)', 8, py+11);
+      if(ult!=null){ cx.fillStyle= ult>=0? '#4cd98a' : '#ff8a5c'; cx.fillText((ult>=0?'+':'')+(ult*100).toFixed(1)+'%', mainW+bookW+8, py+30); }
+      py+=panH;
+    }
+    // --- eje de tiempo
+    sep(py); cx.fillStyle='#8b93a6'; cx.font='11px Inter,Arial';
+    const z=n=>String(n).padStart(2,'0');
+    for(let i=iA;i<=iB;i++) if(i%pasoT===0){ const d=new Date(C[i].t); const t= tfS>=3600? `${z(d.getDate())}/${z(d.getMonth()+1)} ${z(d.getHours())}h` : `${z(d.getHours())}:${z(d.getMinutes())}`;
+      const tw=cx.measureText(t).width; cx.fillText(t, xOf(i)-tw/2, py+12); }
+    const grab=Math.max(0,(Date.now()-mlPrimerMinuto(F))/60000), grabTxt= grab>=1440? Math.floor(grab/1440)+' d '+Math.floor(grab%1440/60)+' h' : grab>=60? Math.floor(grab/60)+' h '+Math.round(grab%60)+' min' : Math.round(grab)+' min';
+    info.textContent = `Libro ${ML.mercado} grabado: ${grabTxt} · ${conDatos} de ${iB-iA+1} velas con datos · clic en un muro = marcar/quitar · rueda = zoom · arrastrar = mover · escala de precio: arrastrar arriba/abajo, doble clic = auto`;
+    if(conDatos<5) mlMensaje(cx,mainW,mainH,'Grabando el libro '+(ML.mercado==='spot'?'spot':'de futuros')+'… llevas '+grabTxt,'El mapa se llena mientras la página esté abierta (se guarda hasta 3 días).');
+    // --- cruz y tabla (no si el ratón está sobre una etiqueta de muro)
+    if(ML.etq.some(e=>e.sobre) || (ML.raton && ML._selY.some(o=>Math.abs(o.y-ML.raton.y)<=Math.max(6,o.hh/2)))){ ML.tip.style.display='none'; return; }
+    mlCursor({C,N,cols,bp,xOf,yOfP,pOfY,mainW,mainH,v,cw,fmtU,conv,maxCol,tCol,pAct});
+  }
+
+  function mlCursor(o){
+    const r=ML.raton, tip=ML.tip, cx=ML.cx; if(!r){ tip.style.display='none'; return; }
+    if(r.x>o.mainW||r.y>o.mainH){ tip.style.display='none'; return; }
+    cx.setLineDash([3,4]); cx.strokeStyle='rgba(209,212,220,0.4)'; cx.lineWidth=1;
+    cx.beginPath(); cx.moveTo(r.x+0.5,0); cx.lineTo(r.x+0.5,o.mainH); cx.moveTo(0,r.y+0.5); cx.lineTo(o.mainW,r.y+0.5); cx.stroke(); cx.setLineDash([]);
+    const i=Math.floor(o.v.i0+r.x/o.cw); if(i<0||i>=o.N){ tip.style.display='none'; return; }
+    const p=o.pOfY(r.y), b0=Math.floor(p/o.bp);
+    const colsIdx=[]; for(let d=-2;d<=2;d++){ const ci=i+d; if(ci>=0&&ci<o.N) colsIdx.push(ci); }
+    const celda=(ci,b)=>{ const c=o.cols[ci]||(ML.colsM&&ML.colsM[ci]); if(!c) return null; return o.conv((c.get(b*2)||0)+(c.get(b*2+1)||0),ci); };
+    const k=o.C[i], dt=new Date(k.t), z=n=>String(n).padStart(2,'0'), cambio=(k.c-k.o)/k.o*100;
+    const fK=x=> x>=1e6? (x/1e6).toFixed(2)+'M' : x>=1e3? (x/1e3).toFixed(x>=1e5?0:1)+'K' : x>=1? x.toFixed(0) : x.toFixed(2);
+    const atras=(o.C[o.N-1].t-k.t)/60000;
+    const atrasTxt= atras<=0? 'vela actual' : (atras>=1440? Math.floor(atras/1440)+' d '+Math.floor((atras%1440)/60)+' h' : atras>=60? Math.floor(atras/60)+' h '+Math.round(atras%60)+' min' : Math.round(atras)+' min')+' antes de la actual';
+    let h=`<div style="display:flex;justify-content:space-between;gap:28px;font-weight:700;font-size:12.5px;color:#fff;"><span>${z(dt.getMonth()+1)}-${z(dt.getDate())} ${z(dt.getHours())}:${z(dt.getMinutes())}</span><span style="color:${cambio>=0?'#4cd98a':'#ff8a5c'}">Cierre ${fmtP(k.c)} ${cambio>=0?'+':''}${cambio.toFixed(2)}%</span></div>`;
+    h+=`<div style="display:flex;justify-content:space-between;gap:16px;color:#8b93a6;font-size:10.5px;margin:3px 0 8px;"><span>${atrasTxt} · ${ML.relleno&&ML.relleno.has(i)? '<b style="color:#f5e83a">sin grabación: muro unido</b>' : 'libro real'}</span><span>Rejilla ${fmtP(o.bp)}</span></div>`;
+    h+=`<table style="border-collapse:separate;border-spacing:3px;font-size:11px;"><tr>`;
+    for(const ci of colsIdx){ const d=new Date(o.C[ci].t); h+=`<th style="color:${ci===i?'#fff':'#8b93a6'};font-weight:${ci===i?700:400};padding:0 6px;">${z(d.getHours())}:${z(d.getMinutes())}</th>`; }
+    h+=`<th></th></tr>`;
+    let sumC=0,sumV=0; const cI=o.cols[i];
+    for(let b=b0+3;b>=b0-3;b--){
+      h+='<tr>';
+      for(const ci of colsIdx){ const val=celda(ci,b), t=o.tCol(val||0);
+        let bg='#1e222d', fg='#d1d4dc', txt= val? fK(val) : '·';
+        if(val==null){ bg='#181b25'; fg='#4a5060'; txt='—'; } else if(!val){ bg='#262a35'; fg='#6b7385'; }
+        else if(t>=0){ bg=colCalor(t); if(t>=0.75) fg='#111'; }
+        h+=`<td style="background:${bg};color:${fg};font-weight:700;text-align:center;padding:5px 7px;border-radius:4px;min-width:46px;${(ci===i&&b===b0)?'outline:1.5px solid #fff;':''}">${txt}</td>`; }
+      const pr=b*o.bp+o.bp/2;
+      h+= b===b0 ? `<td style="background:#fff;color:#111;font-weight:700;padding:3px 7px;border-radius:4px;">${fmtP(pr)}</td>` : `<td style="color:${pr>o.pAct?'#ff8a5c':'#4cd98a'};padding:0 6px;">${fmtP(pr)}</td>`;
+      h+='</tr>';
+      if(cI){ sumC+=o.conv(cI.get(b*2)||0,i); sumV+=o.conv(cI.get(b*2+1)||0,i); }
+    }
+    h+='</table>';
+    const vC=cI? o.conv(cI.get(b0*2)||0,i):0, vV=cI? o.conv(cI.get(b0*2+1)||0,i):0;
+    const fila=(l,rr,c)=>`<div style="display:flex;justify-content:space-between;gap:24px;padding:2px 0;"><span style="color:#8b93a6;">${l}</span><b style="color:${c||'#d1d4dc'}">${rr}</b></div>`;
+    h+=`<div style="border-top:1px solid #2a2e39;margin-top:6px;padding-top:6px;">`;
+    h+=fila('±3 celdas · compra · venta', `<span style="color:#4cd98a">${fK(sumC)}</span> · <span style="color:#ff8a5c">${fK(sumV)}</span>`);
+    h+=fila(vC>=vV?'Compras aquí':'Ventas aquí', cI? o.fmtU(Math.max(vC,vV)) : '—', vC>=vV?'#4cd98a':'#ff8a5c');
+    h+=fila('Desde el precio actual', `${((b0*o.bp+o.bp/2-o.pAct)/o.pAct*100).toFixed(2)}%`);
+    if(k.q>0) h+=`<div style="border-top:1px solid #2a2e39;margin-top:4px;padding-top:4px;">`+fila('Operaciones · compra · venta', `<span style="color:#4cd98a">${fK(k.tb||0)}</span> · <span style="color:#ff8a5c">${fK(k.q-(k.tb||0))}</span>`)+`</div>`;
+    h+='</div>';
+    tip.innerHTML=h; tip.style.display='block';
+    const ar=ML.el.querySelector('#ml-area'), aw=ar.clientWidth, ah=ar.clientHeight, tw=tip.offsetWidth, th=tip.offsetHeight;
+    let tx=r.x+18, ty=r.y+16; if(tx+tw>aw-8) tx=r.x-tw-18; if(ty+th>ah-8) ty=r.y-th-14;
+    tip.style.left=Math.max(4,tx)+'px'; tip.style.top=Math.max(4,ty)+'px';
+  }
+
   function libroInfo(){
     const z=n=>String(n).padStart(2,'0'), hm=t=>{ const d=new Date(t); return z(d.getHours())+':'+z(d.getMinutes()); };
     if(!LIB.orden.length){ console.log('📖 Todavía no se ha grabado nada del libro (¿está conectado el depth? espera unos segundos).'); return; }
@@ -11477,9 +12419,11 @@ const MapaLiq = (function(){
     console.log('Grabando desde: '+hm(LIB.orden[0])+'  ·  '+LIB.orden.length+' min grabados  ·  rejilla '+fmtP(LIB.binPx));
     console.log('Velas del gráfico con libro: '+conDatos+' de '+N+(primera>=0?'  (desde la vela de las '+hm(S.candles[primera].t)+')':''));
     console.log('Niveles en el libro ahora: '+(LIB.live?LIB.live.size:0)+'  ·  referencia de color '+(LIB._ref?usdF(LIB._ref):'(se calcula al dibujar)'));
+    if(HIST.rows.length){ const d=HIST.rows[0].t; console.log('💾 Historia guardada: '+HIST.rows.length+' min  ·  desde '+new Date(d).toLocaleString('es',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'  (se guarda hasta 3 días)'); }
+    else console.log('💾 Historia guardada: todavía nada (se guarda cada minuto mientras la página esté abierta)');
     return {capa:S.on.libro, minutos:LIB.orden.length, velasConDatos:conDatos};
   }
-  return { toggle, setConf, setMinUsd, setNitidez, setGamma, verPrecision, auditStats, setLSWindow, setOIPeriod, onTrade, libroInfo, _state:S };   // [v146] onTrade   // [AÑADIDO v80]
+  return { toggle, setConf, setMinUsd, setNitidez, setGamma, verPrecision, auditStats, setLSWindow, setOIPeriod, onTrade, libroInfo, abrirMapaLibro:mlAbrir, setLibroMin, setEstiloHeat, _state:S };   // [v146] onTrade   // [AÑADIDO v80]
 })();
 /* ======================== [FIN AÑADIDO MAPA-LIQ] ======================== */
 </script>
@@ -12185,6 +13129,32 @@ window.SMCIntra = { analizar, ver, pintar, limpiar, alternar, diagnostico, swing
 
 })();
 
+</script>
+<script>
+/* [v191] abre/cierra el panel ⚙ Ajustes encima del botón que lo abrió */
+function mlxAjustes(btn,ev){ if(ev) ev.stopPropagation(); const p=document.getElementById('mlx-panel'); if(!p) return;
+  if(p.classList.contains('abierto') && p._btn===btn){ mlxCerrar(); return; }
+  p._btn=btn; p.classList.add('abierto');
+  const r=btn.getBoundingClientRect(), pw=p.offsetWidth, ph=p.offsetHeight;
+  let x=Math.min(window.innerWidth-pw-8, Math.max(8, r.left+r.width/2-pw/2));
+  let y=r.top-ph-8; if(y<8) y=r.bottom+8;
+  p.style.left=x+'px'; p.style.top=y+'px'; }
+function mlxCerrar(){ const p=document.getElementById('mlx-panel'); if(p) p.classList.remove('abierto'); }
+document.addEventListener('click',()=>mlxCerrar());
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') mlxCerrar(); });
+</script>
+<script>
+/* [v192] grupos plegables: clic en el nombre del grupo despliega sus botones a la derecha */
+function mlxGrupo(t){ const g=t.parentElement; g.classList.toggle('abierto');
+  try{ const st=JSON.parse(localStorage.getItem('mlxGrupos')||'{}'); st[g.dataset.g]=g.classList.contains('abierto'); localStorage.setItem('mlxGrupos',JSON.stringify(st)); }catch(_){} }
+(function(){
+  const ini=()=>{ let st={}; try{ st=JSON.parse(localStorage.getItem('mlxGrupos')||'{}'); }catch(_){}
+    document.querySelectorAll('.mlx-grp[data-g]').forEach(g=>{ if(st[g.dataset.g]) g.classList.add('abierto'); }); };
+  // contador de capas encendidas junto al nombre (para verlo aunque el grupo esté plegado)
+  const cuenta=()=>document.querySelectorAll('.mlx-grp[data-g]').forEach(g=>{ const n=g.querySelectorAll('.ml-on').length, b=g.querySelector('.mlx-n'); if(b) b.textContent= n? '('+n+')' : ''; });
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ini); else ini();
+  setInterval(cuenta,800);
+})();
 </script>
 </body>
 </html>
